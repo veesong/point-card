@@ -32,7 +32,7 @@ export function MemberCard({ member }: MemberCardProps) {
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
-  const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number } | null>(null);
+  const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number; id: string } | null>(null);
 
   const deleteMember = useAppStore((state) => state.deleteMember);
 
@@ -42,7 +42,7 @@ export function MemberCard({ member }: MemberCardProps) {
   };
 
   const handleQuickItem = (name: string, points: number) => {
-    setSelectedQuickItem({ name, points });
+    setSelectedQuickItem({ name, points, id: crypto.randomUUID() });
     setConfirmDialogOpen(true);
   };
 
@@ -151,6 +151,7 @@ export function MemberCard({ member }: MemberCardProps) {
         memberId={member.id}
         defaultItemName={selectedQuickItem?.name || ''}
         defaultPoints={selectedQuickItem?.points || 0}
+        key={selectedQuickItem?.id}
       />
     </>
   );

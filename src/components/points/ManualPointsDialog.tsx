@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -36,13 +36,6 @@ export function ManualPointsDialog({
 
   const member = members.find((m) => m.id === memberId);
 
-  useEffect(() => {
-    if (open) {
-      setItemName('');
-      setPoints('10');
-    }
-  }, [open]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (member && itemName.trim() && points) {
@@ -53,13 +46,15 @@ export function ManualPointsDialog({
         deductPoints(member.id, itemName.trim(), pointsValue);
       }
       onOpenChange(false);
+      setItemName('');
+      setPoints('10');
     }
   };
 
   const title = operationType === 'add' ? '添加积分' : '扣除积分';
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} key={`${memberId}-${operationType}`}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>

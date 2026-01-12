@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,14 +21,8 @@ interface EditMemberDialogProps {
 }
 
 export function EditMemberDialog({ member, open, onOpenChange }: EditMemberDialogProps) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(member?.name || '');
   const updateMember = useAppStore((state) => state.updateMember);
-
-  useEffect(() => {
-    if (member) {
-      setName(member.name);
-    }
-  }, [member]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +33,7 @@ export function EditMemberDialog({ member, open, onOpenChange }: EditMemberDialo
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} key={member?.id}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>

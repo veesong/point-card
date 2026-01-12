@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,19 +28,12 @@ export function ConfirmPointsDialog({
   defaultItemName,
   defaultPoints,
 }: ConfirmPointsDialogProps) {
-  const [itemName, setItemName] = useState('');
-  const [points, setPoints] = useState('0');
+  const [itemName, setItemName] = useState(defaultItemName);
+  const [points, setPoints] = useState(defaultPoints.toString());
   const addPoints = useAppStore((state) => state.addPoints);
   const members = useAppStore((state) => state.members);
 
   const member = members.find((m) => m.id === memberId);
-
-  useEffect(() => {
-    if (open) {
-      setItemName(defaultItemName);
-      setPoints(defaultPoints.toString());
-    }
-  }, [open, defaultItemName, defaultPoints]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
