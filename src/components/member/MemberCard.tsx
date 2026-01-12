@@ -78,7 +78,7 @@ export function MemberCard({ member }: MemberCardProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>确认删除</AlertDialogTitle>
                   <AlertDialogDescription>
-                    确定要删除成员 "{member.name}" 吗？删除后成员的积分记录将保留，但无法再为该成员添加积分。
+                    确定要删除成员 &ldquo;{member.name}&rdquo; 吗？删除后成员的积分记录将保留，但无法再为该成员添加积分。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
