@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create next-app:*)",
+      "Bash(npm --version)",
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm --version)",
+      "Bash(tree:*)",
+      "Bash(pnpm dev)"
+    ]
+  }
+}
