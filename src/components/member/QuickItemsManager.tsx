@@ -161,7 +161,7 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onOpenChange}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             关闭
           </Button>
           {!isAdding && (
