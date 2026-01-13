@@ -1,5 +1,4 @@
 import { MemberList } from '@/components/member/MemberList';
-import { LogList } from '@/components/log/LogList';
 
 export default function Home() {
   return (
@@ -13,10 +12,6 @@ export default function Home() {
         <main className="space-y-12">
           <section>
             <MemberList />
-          </section>
-
-          <section>
-            <LogList />
           </section>
         </main>
 

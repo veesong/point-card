@@ -30,9 +30,18 @@ export const useAppStore = create<AppState>()(
       },
 
       deleteMember: (id: string) => {
-        set((state) => ({
-          members: state.members.filter((member) => member.id !== id),
-        }));
+        set((state) => {
+          // 过滤掉要删除的成员
+          const updatedMembers = state.members.filter((member) => member.id !== id);
+
+          // 过滤掉该成员的所有日志
+          const updatedLogs = state.logs.filter((log) => log.memberId !== id);
+
+          return {
+            members: updatedMembers,
+            logs: updatedLogs,
+          };
+        });
       },
 
       // 积分操作

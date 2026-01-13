@@ -19,7 +19,8 @@ import { EditMemberDialog } from './EditMemberDialog';
 import { QuickItemsManager } from './QuickItemsManager';
 import { ManualPointsDialog } from '@/components/points/ManualPointsDialog';
 import { ConfirmPointsDialog } from '@/components/points/ConfirmPointsDialog';
-import { Plus, Minus, Settings, Trash2, Edit2 } from 'lucide-react';
+import { MemberLogDialog } from '@/components/log/MemberLogDialog';
+import { Plus, Minus, Settings, Trash2, Edit2, History } from 'lucide-react';
 import type { Member } from '@/types';
 
 interface MemberCardProps {
@@ -33,6 +34,7 @@ export function MemberCard({ member }: MemberCardProps) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
   const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number; id: string; operationType: 'add' | 'deduct' } | null>(null);
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
 
   const deleteMember = useAppStore((state) => state.deleteMember);
 
@@ -63,6 +65,14 @@ export function MemberCard({ member }: MemberCardProps) {
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setLogDialogOpen(true)}
+              title="查看操作日志"
+            >
+              <History className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setEditDialogOpen(true)}
               title="编辑成员"
             >
@@ -78,7 +88,7 @@ export function MemberCard({ member }: MemberCardProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>确认删除</AlertDialogTitle>
                   <AlertDialogDescription>
-                    确定要删除成员 &ldquo;{member.name}&rdquo; 吗？删除后成员的积分记录将保留，但无法再为该成员添加积分。
+                    确定要删除成员 &ldquo;{member.name}&rdquo; 吗？删除后将同时删除该成员的所有操作日志，此操作无法撤销。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -154,6 +164,7 @@ export function MemberCard({ member }: MemberCardProps) {
         operationType={selectedQuickItem?.operationType || 'add'}
         key={selectedQuickItem?.id}
       />
+      <MemberLogDialog member={member} open={logDialogOpen} onOpenChange={setLogDialogOpen} />
     </>
   );
 }

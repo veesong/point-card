@@ -34,3 +34,12 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## TODOS
+
+- [ ] 日志导出：添加"导出日志"按钮，下载 CSV/JSON 格式
+- [ ] 日志过滤：添加日期范围或操作类型过滤
+- [ ] 日志统计：显示汇总信息（总加分、总扣分、净积分）
+- [ ] 全局日志视图：保留 LogList 作为管理员功能
+- [ ] 软删除：归档日志而不是永久删除
+- [ ] 日志搜索：在成员日志中添加搜索功能
