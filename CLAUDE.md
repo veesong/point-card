@@ -124,7 +124,38 @@ pnpm dlx shadcn@latest add <组件名称>
 
 使用 [lib/utils.ts](lib/utils.ts) 中的 `cn()` 工具函数来合并 Tailwind 类。
 
+## CI/CD
+
+### GitHub Actions
+
+项目使用 GitHub Actions 进行持续集成和部署：
+- [build.yml](.github/workflows/build.yml) - 代码构建和测试（在 push 和 PR 时触发）
+- [nextjs.yml](.github/workflows/nextjs.yml) - 部署到 GitHub Pages
+
+**构建流程：**
+1. 安装依赖（使用 pnpm 和 frozen-lockfile）
+2. 运行 ESLint 检查（`pnpm lint`）
+3. 构建生产版本（`pnpm build`）
+
 ## 重要注意事项
+
+### ESLint 规则
+
+**React/JSX 中避免使用未转义的引号：**
+- 在 JSX 中使用中文引号 `"` 或 `"` 会触发 `react/no-unescaped-entities` 错误
+- 必须使用 HTML 实体转义：
+  - `"` 替换为 `&ldquo;`
+  - `"` 替换为 `&rdquo;`
+  - `'` 替换为 `&lsquo;`
+  - `'` 替换为 `&rsquo;`
+
+```tsx
+// ❌ 错误 - 会导致 ESLint 报错
+<div>要保存"文件"吗？</div>
+
+// ✅ 正确
+<div>要保存&ldquo;文件&rdquo;吗？</div>
+```
 
 ### 避免无限循环
 当从 Zustand store 获取数据并需要过滤时，始终使用 `useMemo`：
