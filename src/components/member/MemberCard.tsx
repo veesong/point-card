@@ -18,7 +18,6 @@ import {
 import { EditMemberDialog } from './EditMemberDialog';
 import { QuickItemsManager } from './QuickItemsManager';
 import { ManualPointsDialog } from '@/components/points/ManualPointsDialog';
-import { ConfirmPointsDialog } from '@/components/points/ConfirmPointsDialog';
 import { MemberLogDialog } from '@/components/log/MemberLogDialog';
 import { Plus, Minus, Settings, Trash2, Edit2, History } from 'lucide-react';
 import type { Member } from '@/types';
@@ -31,9 +30,7 @@ export function MemberCard({ member }: MemberCardProps) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [quickManagerOpen, setQuickManagerOpen] = useState(false);
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
-  const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number; id: string; operationType: 'add' | 'deduct' } | null>(null);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
 
   const deleteMember = useAppStore((state) => state.deleteMember);
@@ -41,11 +38,6 @@ export function MemberCard({ member }: MemberCardProps) {
   const handleManualPoints = (type: 'add' | 'deduct') => {
     setOperationType(type);
     setManualDialogOpen(true);
-  };
-
-  const handleQuickItem = (name: string, points: number, operationType: 'add' | 'deduct' = 'add') => {
-    setSelectedQuickItem({ name, points, id: crypto.randomUUID(), operationType });
-    setConfirmDialogOpen(true);
   };
 
   return (
@@ -58,7 +50,7 @@ export function MemberCard({ member }: MemberCardProps) {
               variant="ghost"
               size="sm"
               onClick={() => setQuickManagerOpen(true)}
-              title="管理快捷项"
+              title="管理快捷操作"
             >
               <Settings className="h-4 w-4" />
             </Button>
@@ -106,26 +98,6 @@ export function MemberCard({ member }: MemberCardProps) {
             {member.totalPoints >= 0 ? '+' : ''}
             {member.totalPoints} 分
           </div>
-
-          {/* 快捷积分项 */}
-          {member.quickItems && member.quickItems.length > 0 && (
-            <div className="space-y-2 mb-4">
-              <div className="text-sm text-muted-foreground">快捷积分</div>
-              <div className="flex flex-wrap gap-2">
-                {member.quickItems.map((item) => (
-                  <Button
-                    key={item.id}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickItem(item.name, item.points, item.operationType || 'add')}
-                    className="text-sm"
-                  >
-                    {item.name} {item.operationType === 'deduct' ? '-' : '+'}{item.points}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
         </CardContent>
         <CardFooter className="gap-2">
           <Button
@@ -154,15 +126,6 @@ export function MemberCard({ member }: MemberCardProps) {
         onOpenChange={setManualDialogOpen}
         memberId={member.id}
         operationType={operationType}
-      />
-      <ConfirmPointsDialog
-        open={confirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
-        memberId={member.id}
-        defaultItemName={selectedQuickItem?.name || ''}
-        defaultPoints={selectedQuickItem?.points || 0}
-        operationType={selectedQuickItem?.operationType || 'add'}
-        key={selectedQuickItem?.id}
       />
       <MemberLogDialog member={member} open={logDialogOpen} onOpenChange={setLogDialogOpen} />
     </>
