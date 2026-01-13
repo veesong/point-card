@@ -34,9 +34,14 @@ jobs:
     - name: Build project
       run: pnpm build
 
+    - name: List directory contents
+      run: ls -la
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
         name: build-output
-        path: .next
+        path: |
+          .next
+          !.next/cache
         retention-days: 7
