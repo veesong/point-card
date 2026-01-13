@@ -29,6 +29,7 @@ pnpm lint         # 运行 ESLint
 - 所有状态变更必须通过 store actions 进行 - 组件中永远不要直接修改状态
 - 成员的 `totalPoints` 是非规范化字段，与积分操作同步更新（不是从日志计算）
 - 日志冗余存储 `memberName`，以确保即使删除成员后历史记录仍能正确显示
+- 删除成员时会同时删除其所有关联日志
 - 撤销操作会创建新的日志条目，并将原日志标记为 `isUndone: true`
 - 只有原始操作（加分/扣分）可以被撤销，撤销操作本身不能被撤销
 
@@ -44,29 +45,52 @@ pnpm lint         # 运行 ESLint
 组件按业务域组织在 [src/components/](src/components/)：
 
 - `member/` - 成员管理（MemberCard、MemberList、AddMemberDialog、EditMemberDialog、QuickItemsManager）
-- `points/` - 积分操作（ManualPointsDialog、ConfirmPointsDialog）
-- `log/` - 操作历史（LogList、LogItem）
+- `points/` - 积分操作（ManualPointsDialog）
+- `log/` - 操作历史（MemberLogDialog、LogItem）
 - `ui/` - shadcn/ui 基础组件
 
 **对话框模式：**
 所有对话框使用 shadcn/ui 的 Dialog 组件，采用受控的 `open` 状态：
 - 父组件管理 `open` 布尔值状态
 - 对话框接收 `onOpenChange` 回调来关闭自身
-- 此模式在 AddMemberDialog、EditMemberDialog、ManualPointsDialog、ConfirmPointsDialog、QuickItemsManager 中保持一致
+- 此模式在所有对话框组件中保持一致
 
 ### 快捷积分系统
 
-每个成员都有 `quickItems` 数组用于常用积分操作。点击快捷项时：
-1. 打开 ConfirmPointsDialog，预填充项目名称和分数
-2. 用户可以在确认前编辑这些值
-3. 确认后调用 store 的 `addPoints()` action
+每个成员都有 `quickItems` 数组用于常用积分操作。快捷项支持加分和扣分两种操作类型（通过 `operationType` 字段区分）。
+
+**工作流程：**
+1. 用户点击"加分"或"扣分"按钮打开 ManualPointsDialog
+2. 对话框根据操作类型过滤并显示对应的快捷操作按钮
+3. 用户点击快捷操作按钮可快速填充表单
+4. 用户提交后：
+   - 如果项目名称已存在于快捷项中，直接关闭对话框
+   - 如果项目名称不存在，弹出 AlertDialog 询问是否添加为快捷操作
+5. 用户可通过成员卡片上的设置按钮管理快捷项
+
+**向后兼容性：**
+- 现有快捷项如果没有 `operationType` 字段，默认为 'add'（加分）
+- 新创建的快捷项必须指定 `operationType`
+
+### 操作日志系统
+
+操作日志按成员分离显示：
+- 每个成员卡片有"查看操作日志"按钮，打开 MemberLogDialog
+- 日志通过 `memberId` 过滤，只显示该成员的记录
+- 删除成员时，其所有日志会被同时删除
+- 不再有全局日志视图，所有日志都在成员级别查看
+
+**性能优化：**
+- MemberLogDialog 使用 `useMemo` 缓存过滤后的日志，避免 Zustand selector 导致的无限循环
+- 正确模式：先获取全部数据，再用 `useMemo` 过滤
+- 错误模式：在 selector 中直接过滤（会创建新引用导致重渲染）
 
 ### 类型定义
 
 所有类型集中在 [src/types/index.ts](src/types/index.ts)：
 - `Member` - 家庭成员，包含快捷项和总积分
-- `QuickPointItem` - 积分操作的快捷配置
-- `PointLog` - 操作记录，包含撤销状态
+- `QuickPointItem` - 积分操作的快捷配置，支持 `operationType` 字段
+- `PointLog` - 操作记录，包含撤销状态和关联日志引用
 - `AppState` - Zustand store 接口，包含所有状态和操作
 
 ### 工具函数
@@ -75,10 +99,15 @@ pnpm lint         # 运行 ESLint
 - `formatDateTime()` - 使用 Intl API 的中文日期格式化
 - `getOperationTypeText()` - 将操作类型映射为中文文本
 - `getOperationTypeColor()` - 返回操作类型的 Tailwind 颜色类
+- `cn()` - 合并 Tailwind 类的工具函数
 
 ### 数据持久化
 
-Zustand store 使用 `persist` 中间件，localStorage 键名为 `family-points-storage`。数据在页面刷新和浏览器重启后保留。如需重置数据，清除 localStorage 或使用浏览器开发者工具。
+Zustand store 使用 `persist` 中间件：
+- localStorage 键名为 `family-points-storage`
+- 当前版本为 2（version 字段）
+- 数据在页面刷新和浏览器重启后保留
+- 如需重置数据，清除 localStorage 或使用浏览器开发者工具
 
 ## UI 组件
 
@@ -94,3 +123,32 @@ pnpm dlx shadcn@latest add <组件名称>
 使用 Tailwind CSS v4 和 `@import "tailwindcss"` 语法。颜色方案使用 CSS 变量支持亮/暗模式，定义在 [app/globals.css](app/globals.css)。
 
 使用 [lib/utils.ts](lib/utils.ts) 中的 `cn()` 工具函数来合并 Tailwind 类。
+
+## 重要注意事项
+
+### 避免无限循环
+当从 Zustand store 获取数据并需要过滤时，始终使用 `useMemo`：
+```typescript
+// ✅ 正确
+const allLogs = useAppStore((state) => state.logs);
+const logs = useMemo(
+  () => allLogs.filter((log) => log.memberId === memberId),
+  [allLogs, memberId]
+);
+
+// ❌ 错误 - 会导致无限循环
+const logs = useAppStore((state) =>
+  state.logs.filter((log) => log.memberId === memberId)
+);
+```
+
+### 快捷项操作类型
+- 创建快捷项时必须指定 `operationType`（'add' 或 'deduct'）
+- 加分对话框只显示 `operationType === 'add'` 或未定义的快捷项（向后兼容）
+- 扣分对话框只显示 `operationType === 'deduct'` 的快捷项
+
+### 成员删除
+删除成员操作是原子性的，会同时删除：
+- 成员本身
+- 该成员的所有日志
+- 无法撤销此操作
