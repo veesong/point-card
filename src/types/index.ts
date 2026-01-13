@@ -2,7 +2,8 @@
 export interface QuickPointItem {
   id: string;
   name: string; // 项目名称，如"完成作业"
-  points: number; // 分数，如 10
+  points: number; // 分数，始终存储为正数
+  operationType?: 'add' | 'deduct'; // 操作类型，可选，用于向后兼容，默认为 'add'
 }
 
 // 家庭成员
@@ -45,8 +46,8 @@ export interface AppState {
   deductPoints: (memberId: string, itemName: string, points: number) => void;
 
   // 快捷积分项操作
-  addQuickItem: (memberId: string, name: string, points: number) => void;
-  updateQuickItem: (memberId: string, itemId: string, name: string, points: number) => void;
+  addQuickItem: (memberId: string, name: string, points: number, operationType?: 'add' | 'deduct') => void;
+  updateQuickItem: (memberId: string, itemId: string, name: string, points: number, operationType?: 'add' | 'deduct') => void;
   deleteQuickItem: (memberId: string, itemId: string) => void;
 
   // 日志操作

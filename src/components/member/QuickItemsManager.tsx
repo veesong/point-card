@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Minus } from 'lucide-react';
 import type { Member, QuickPointItem } from '@/types';
 
 interface QuickItemsManagerProps {
@@ -25,10 +25,11 @@ interface EditingItem {
   id: string | null;
   name: string;
   points: string;
+  operationType: 'add' | 'deduct';
 }
 
 export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsManagerProps) {
-  const [editingItem, setEditingItem] = useState<EditingItem>({ id: null, name: '', points: '10' });
+  const [editingItem, setEditingItem] = useState<EditingItem>({ id: null, name: '', points: '10', operationType: 'add' });
   const [isAdding, setIsAdding] = useState(false);
 
   const addQuickItem = useAppStore((state) => state.addQuickItem);
@@ -37,21 +38,21 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
 
   const handleAdd = () => {
     if (member && editingItem.name.trim() && editingItem.points) {
-      addQuickItem(member.id, editingItem.name.trim(), parseInt(editingItem.points, 10));
-      setEditingItem({ id: null, name: '', points: '10' });
+      addQuickItem(member.id, editingItem.name.trim(), parseInt(editingItem.points, 10), editingItem.operationType);
+      setEditingItem({ id: null, name: '', points: '10', operationType: 'add' });
       setIsAdding(false);
     }
   };
 
   const handleUpdate = () => {
     if (member && editingItem.id && editingItem.name.trim() && editingItem.points) {
-      updateQuickItem(member.id, editingItem.id, editingItem.name.trim(), parseInt(editingItem.points, 10));
-      setEditingItem({ id: null, name: '', points: '10' });
+      updateQuickItem(member.id, editingItem.id, editingItem.name.trim(), parseInt(editingItem.points, 10), editingItem.operationType);
+      setEditingItem({ id: null, name: '', points: '10', operationType: 'add' });
     }
   };
 
   const handleEdit = (item: QuickPointItem) => {
-    setEditingItem({ id: item.id, name: item.name, points: item.points.toString() });
+    setEditingItem({ id: item.id, name: item.name, points: item.points.toString(), operationType: item.operationType || 'add' });
     setIsAdding(false);
   };
 
@@ -62,12 +63,12 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
   };
 
   const startAdding = () => {
-    setEditingItem({ id: null, name: '', points: '10' });
+    setEditingItem({ id: null, name: '', points: '10', operationType: 'add' });
     setIsAdding(true);
   };
 
   const cancelEdit = () => {
-    setEditingItem({ id: null, name: '', points: '10' });
+    setEditingItem({ id: null, name: '', points: '10', operationType: 'add' });
     setIsAdding(false);
   };
 
@@ -83,28 +84,51 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
         <div className="py-4 space-y-4">
           {/* 添加新项 */}
           {isAdding && (
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
+            <div className="space-y-3">
+              <div className="flex gap-2">
                 <Input
                   placeholder="项目名称"
                   value={editingItem.name}
                   onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                  className="flex-1"
                 />
-              </div>
-              <div className="w-20">
                 <Input
                   type="number"
                   placeholder="分数"
                   value={editingItem.points}
                   onChange={(e) => setEditingItem({ ...editingItem, points: e.target.value })}
+                  className="w-20"
                 />
               </div>
-              <Button size="sm" onClick={handleAdd} disabled={!editingItem.name.trim() || !editingItem.points}>
-                确认
-              </Button>
-              <Button size="sm" variant="outline" onClick={cancelEdit}>
-                取消
-              </Button>
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-muted-foreground">操作类型:</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editingItem.operationType === 'add' ? 'default' : 'outline'}
+                  onClick={() => setEditingItem({ ...editingItem, operationType: 'add' })}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  加分
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={editingItem.operationType === 'deduct' ? 'destructive' : 'outline'}
+                  onClick={() => setEditingItem({ ...editingItem, operationType: 'deduct' })}
+                >
+                  <Minus className="h-4 w-4 mr-1" />
+                  扣分
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleAdd} disabled={!editingItem.name.trim() || !editingItem.points} className="flex-1">
+                  确认
+                </Button>
+                <Button size="sm" variant="outline" onClick={cancelEdit} className="flex-1">
+                  取消
+                </Button>
+              </div>
             </div>
           )}
 
@@ -117,28 +141,54 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
               >
                 {editingItem.id === item.id ? (
                   <>
-                    <Input
-                      className="flex-1"
-                      value={editingItem.name}
-                      onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                    />
-                    <Input
-                      className="w-20"
-                      type="number"
-                      value={editingItem.points}
-                      onChange={(e) => setEditingItem({ ...editingItem, points: e.target.value })}
-                    />
-                    <Button size="sm" onClick={handleUpdate} disabled={!editingItem.name.trim()}>
-                      保存
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={cancelEdit}>
-                      取消
-                    </Button>
+                    <div className="flex-1 space-y-2">
+                      <Input
+                        value={editingItem.name}
+                        onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                      />
+                      <Input
+                        type="number"
+                        value={editingItem.points}
+                        onChange={(e) => setEditingItem({ ...editingItem, points: e.target.value })}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={editingItem.operationType === 'add' ? 'default' : 'outline'}
+                          onClick={() => setEditingItem({ ...editingItem, operationType: 'add' })}
+                          className="flex-1"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          加分
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={editingItem.operationType === 'deduct' ? 'destructive' : 'outline'}
+                          onClick={() => setEditingItem({ ...editingItem, operationType: 'deduct' })}
+                          className="flex-1"
+                        >
+                          <Minus className="h-4 w-4 mr-1" />
+                          扣分
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleUpdate} disabled={!editingItem.name.trim()}>
+                        保存
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={cancelEdit}>
+                        取消
+                      </Button>
+                    </div>
                   </>
                 ) : (
                   <>
                     <span className="flex-1">{item.name}</span>
-                    <span className="text-sm text-muted-foreground">+{item.points}分</span>
+                    <span className={`text-sm ${item.operationType === 'deduct' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                      {item.operationType === 'deduct' ? '-' : '+'}{item.points}分
+                    </span>
                     <Button size="sm" variant="ghost" onClick={() => handleEdit(item)}>
                       <Edit2 className="h-4 w-4" />
                     </Button>

@@ -32,7 +32,7 @@ export function MemberCard({ member }: MemberCardProps) {
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
-  const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number; id: string } | null>(null);
+  const [selectedQuickItem, setSelectedQuickItem] = useState<{ name: string; points: number; id: string; operationType: 'add' | 'deduct' } | null>(null);
 
   const deleteMember = useAppStore((state) => state.deleteMember);
 
@@ -41,8 +41,8 @@ export function MemberCard({ member }: MemberCardProps) {
     setManualDialogOpen(true);
   };
 
-  const handleQuickItem = (name: string, points: number) => {
-    setSelectedQuickItem({ name, points, id: crypto.randomUUID() });
+  const handleQuickItem = (name: string, points: number, operationType: 'add' | 'deduct' = 'add') => {
+    setSelectedQuickItem({ name, points, id: crypto.randomUUID(), operationType });
     setConfirmDialogOpen(true);
   };
 
@@ -107,10 +107,10 @@ export function MemberCard({ member }: MemberCardProps) {
                     key={item.id}
                     variant="outline"
                     size="sm"
-                    onClick={() => handleQuickItem(item.name, item.points)}
+                    onClick={() => handleQuickItem(item.name, item.points, item.operationType || 'add')}
                     className="text-sm"
                   >
-                    {item.name} +{item.points}
+                    {item.name} {item.operationType === 'deduct' ? '-' : '+'}{item.points}
                   </Button>
                 ))}
               </div>
@@ -151,6 +151,7 @@ export function MemberCard({ member }: MemberCardProps) {
         memberId={member.id}
         defaultItemName={selectedQuickItem?.name || ''}
         defaultPoints={selectedQuickItem?.points || 0}
+        operationType={selectedQuickItem?.operationType || 'add'}
         key={selectedQuickItem?.id}
       />
     </>

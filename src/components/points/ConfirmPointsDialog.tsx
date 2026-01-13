@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,12 +13,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 
+type OperationType = 'add' | 'deduct';
+
 interface ConfirmPointsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   memberId: string | null;
   defaultItemName: string;
   defaultPoints: number;
+  operationType: OperationType;
 }
 
 export function ConfirmPointsDialog({
@@ -27,20 +30,32 @@ export function ConfirmPointsDialog({
   memberId,
   defaultItemName,
   defaultPoints,
+  operationType,
 }: ConfirmPointsDialogProps) {
   const [itemName, setItemName] = useState(defaultItemName);
   const [points, setPoints] = useState(defaultPoints.toString());
   const addPoints = useAppStore((state) => state.addPoints);
+  const deductPoints = useAppStore((state) => state.deductPoints);
   const members = useAppStore((state) => state.members);
 
   const member = members.find((m) => m.id === memberId);
+
+  // 重置表单状态
+  useEffect(() => {
+    setItemName(defaultItemName);
+    setPoints(defaultPoints.toString());
+  }, [defaultItemName, defaultPoints, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (member && itemName.trim() && points) {
       const pointsValue = parseInt(points, 10);
       if (pointsValue > 0) {
-        addPoints(member.id, itemName.trim(), pointsValue);
+        if (operationType === 'add') {
+          addPoints(member.id, itemName.trim(), pointsValue);
+        } else {
+          deductPoints(member.id, itemName.trim(), pointsValue);
+        }
         onOpenChange(false);
       }
     }
@@ -51,8 +66,10 @@ export function ConfirmPointsDialog({
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>确认积分操作</DialogTitle>
-            <DialogDescription>确认要为 {member?.name || '成员'} 添加积分吗？</DialogDescription>
+            <DialogTitle>{operationType === 'add' ? '确认加分' : '确认扣分'}</DialogTitle>
+            <DialogDescription>
+              确认要{operationType === 'add' ? '为' : '从'} {member?.name || '成员'} {operationType === 'add' ? '添加' : '扣除'} {points} 分吗？
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
@@ -78,8 +95,12 @@ export function ConfirmPointsDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               取消
             </Button>
-            <Button type="submit" disabled={!itemName.trim() || !points || parseInt(points, 10) <= 0}>
-              确认添加
+            <Button
+              type="submit"
+              variant={operationType === 'deduct' ? 'destructive' : 'default'}
+              disabled={!itemName.trim() || !points || parseInt(points, 10) <= 0}
+            >
+              确认{operationType === 'add' ? '加分' : '扣分'}
             </Button>
           </DialogFooter>
         </form>

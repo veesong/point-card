@@ -87,7 +87,7 @@ export const useAppStore = create<AppState>()(
       },
 
       // 快捷积分项操作
-      addQuickItem: (memberId: string, name: string, points: number) => {
+      addQuickItem: (memberId: string, name: string, points: number, operationType: 'add' | 'deduct' = 'add') => {
         set((state) => ({
           members: state.members.map((member) =>
             member.id === memberId
@@ -95,7 +95,7 @@ export const useAppStore = create<AppState>()(
                   ...member,
                   quickItems: [
                     ...member.quickItems,
-                    { id: crypto.randomUUID(), name, points },
+                    { id: crypto.randomUUID(), name, points, operationType },
                   ],
                 }
               : member
@@ -103,14 +103,14 @@ export const useAppStore = create<AppState>()(
         }));
       },
 
-      updateQuickItem: (memberId: string, itemId: string, name: string, points: number) => {
+      updateQuickItem: (memberId: string, itemId: string, name: string, points: number, operationType: 'add' | 'deduct' = 'add') => {
         set((state) => ({
           members: state.members.map((member) =>
             member.id === memberId
               ? {
                   ...member,
                   quickItems: member.quickItems.map((item) =>
-                    item.id === itemId ? { ...item, name, points } : item
+                    item.id === itemId ? { ...item, name, points, operationType } : item
                   ),
                 }
               : member
@@ -183,7 +183,7 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'family-points-storage',
-      version: 1,
+      version: 2,
     }
   )
 );
