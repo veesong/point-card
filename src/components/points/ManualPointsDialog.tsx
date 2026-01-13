@@ -192,7 +192,7 @@ export function ManualPointsDialog({
             <AlertDialogHeader>
               <AlertDialogTitle>添加为快捷操作？</AlertDialogTitle>
               <AlertDialogDescription>
-                要将 "{pendingQuickItem.name}" ({pendingQuickItem.operationType === 'add' ? '+' : '-'}
+                要将 &ldquo;{pendingQuickItem.name}&rdquo; ({pendingQuickItem.operationType === 'add' ? '+' : '-'}
                 {pendingQuickItem.points}分) 添加为快捷操作吗？下次操作时可以直接选择。
               </AlertDialogDescription>
             </AlertDialogHeader>
