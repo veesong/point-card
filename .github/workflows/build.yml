@@ -41,6 +41,6 @@ jobs:
       with:
         name: build-output
         path: |
-          .next
+          './.next'
           !.next/cache
         retention-days: 7
