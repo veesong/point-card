@@ -61,6 +61,11 @@ jobs:
 
       - name: Build with Next.js
         run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: List build output
+        run: ls -la
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
