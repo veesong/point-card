@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { TemplateCategory } from './TemplateCategory';
 import { TemplateManagerDialog } from './TemplateManagerDialog';
 import { TemplateImportDialog } from './TemplateImportDialog';
@@ -15,12 +16,30 @@ export function TemplateSection() {
   const categories = useAppStore((state) => state.categories);
   const templates = useAppStore((state) => state.templates);
   const members = useAppStore((state) => state.members);
+  const _hasHydrated = useAppStore((state) => state._hasHydrated);
 
   // 按分类分组模板
   const templatesByCategory = categories.map((category) => ({
     ...category,
     templates: templates.filter((t) => t.categoryId === category.id)
   }));
+
+  // 显示加载骨架屏
+  if (!_hasHydrated) {
+    return (
+      <div className="space-y-4">
+        <Card className="p-6">
+          <div className="animate-pulse space-y-3">
+            <div className="h-6 bg-muted rounded w-1/4"></div>
+            <div className="space-y-2">
+              <div className="h-10 bg-muted rounded"></div>
+              <div className="h-10 bg-muted rounded"></div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

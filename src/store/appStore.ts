@@ -42,10 +42,10 @@ export const useAppStore = create<AppState & TemplateState>()(
       members: [],
       logs: [],
 
-      // 模板和公告初始状态
-      categories: defaultCategories,
-      templates: defaultTemplates,
-      bulletin: defaultBulletin,
+      // 模板和公告初始状态（空状态，由 merge 函数智能初始化）
+      categories: [],
+      templates: [],
+      bulletin: { content: '', lastUpdated: 0 },
 
       // 成员操作
       addMember: (name: string) => {
@@ -333,17 +333,32 @@ export const useAppStore = create<AppState & TemplateState>()(
           };
         }
 
-        if (version === 3) {
-          // 从版本 3 迁移到版本 4，更新模板数据
-          const state = persistedState as AppState;
+        return persistedState;
+      },
+      merge: (persistedState: unknown, currentState: AppState & TemplateState) => {
+        const persisted = persistedState as Partial<AppState & TemplateState>;
+
+        // 如果持久化状态中有分类数据，使用用户数据
+        if (persisted.categories && persisted.categories.length > 0) {
           return {
-            ...state,
-            categories: defaultCategories,
-            templates: defaultTemplates
+            ...currentState,
+            ...persisted
           };
         }
 
-        return persistedState;
+        // 没有持久化数据，初始化默认模板
+        return {
+          ...currentState,
+          ...persisted,
+          categories: defaultCategories,
+          templates: defaultTemplates,
+          bulletin: defaultBulletin
+        };
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
       }
     }
   )

@@ -82,6 +82,7 @@ export interface TemplateState {
   categories: TemplateCategory[];
   templates: TemplateItem[];
   bulletin: Bulletin;
+  _hasHydrated?: boolean; // 数据水合完成标记
 
   // 分类操作
   addCategory: (name: string) => void;

@@ -20,6 +20,7 @@ export function BulletinSection() {
 
   const bulletin = useAppStore((state) => state.bulletin);
   const updateBulletin = useAppStore((state) => state.updateBulletin);
+  const _hasHydrated = useAppStore((state) => state._hasHydrated);
 
   const handleSave = () => {
     updateBulletin(content);
@@ -30,6 +31,20 @@ export function BulletinSection() {
     setContent(bulletin.content);
     setEditOpen(true);
   };
+
+  // 显示加载骨架屏
+  if (!_hasHydrated) {
+    return (
+      <Card className="h-full">
+        <CardContent className="p-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
+            <div className="h-24 bg-muted rounded"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
