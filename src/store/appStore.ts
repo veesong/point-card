@@ -42,10 +42,10 @@ export const useAppStore = create<AppState & TemplateState>()(
       members: [],
       logs: [],
 
-      // 模板和公告初始状态（空状态，由 merge 函数智能初始化）
-      categories: [],
-      templates: [],
-      bulletin: { content: '', lastUpdated: 0 },
+      // 模板和公告初始状态（设置为默认值）
+      categories: defaultCategories,
+      templates: defaultTemplates,
+      bulletin: defaultBulletin,
 
       // 成员操作
       addMember: (name: string) => {
@@ -338,21 +338,11 @@ export const useAppStore = create<AppState & TemplateState>()(
       merge: (persistedState: unknown, currentState: AppState & TemplateState) => {
         const persisted = persistedState as Partial<AppState & TemplateState>;
 
-        // 如果持久化状态中有分类数据，使用用户数据
-        if (persisted.categories && persisted.categories.length > 0) {
-          return {
-            ...currentState,
-            ...persisted
-          };
-        }
-
-        // 没有持久化数据，初始化默认模板
+        // 合并持久化状态和当前状态
+        // 优先使用持久化的数据（如果存在）
         return {
           ...currentState,
-          ...persisted,
-          categories: defaultCategories,
-          templates: defaultTemplates,
-          bulletin: defaultBulletin
+          ...persisted
         };
       },
       onRehydrateStorage: () => (state) => {
