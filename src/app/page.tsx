@@ -1,4 +1,6 @@
 import { MemberList } from '@/components/member/MemberList';
+import { TemplateSection } from '@/components/template/TemplateSection';
+import { BulletinSection } from '@/components/bulletin/BulletinSection';
 
 export default function Home() {
   return (
@@ -12,6 +14,17 @@ export default function Home() {
         <main className="space-y-12">
           <section>
             <MemberList />
+          </section>
+
+          <section>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-3">
+                <TemplateSection />
+              </div>
+              <div className="lg:col-span-1">
+                <BulletinSection />
+              </div>
+            </div>
           </section>
         </main>
 

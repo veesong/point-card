@@ -31,6 +31,28 @@ export interface PointLog {
   relatedLogId?: string; // 关联的原始日志ID（撤销操作时使用）
 }
 
+// 模板分类
+export interface TemplateCategory {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
+// 模板项
+export interface TemplateItem {
+  id: string;
+  categoryId: string;
+  name: string;
+  points: number;
+  operationType: 'add' | 'deduct';
+}
+
+// 公告栏内容
+export interface Bulletin {
+  content: string;
+  lastUpdated: number;
+}
+
 // 应用全局状态
 export interface AppState {
   members: Member[];
@@ -53,4 +75,27 @@ export interface AppState {
   // 日志操作
   undoLog: (logId: string) => void;
   canUndoLog: (logId: string) => boolean;
+}
+
+// 模板和公告状态
+export interface TemplateState {
+  categories: TemplateCategory[];
+  templates: TemplateItem[];
+  bulletin: Bulletin;
+
+  // 分类操作
+  addCategory: (name: string) => void;
+  updateCategory: (id: string, name: string) => void;
+  deleteCategory: (id: string) => void;
+
+  // 模板操作
+  addTemplate: (categoryId: string, name: string, points: number, operationType: 'add' | 'deduct') => void;
+  updateTemplate: (id: string, name: string, points: number, operationType: 'add' | 'deduct') => void;
+  deleteTemplate: (id: string) => void;
+
+  // 批量导入操作
+  importTemplatesToMember: (memberId: string, templateIds: string[]) => void;
+
+  // 公告操作
+  updateBulletin: (content: string) => void;
 }

@@ -24,6 +24,9 @@ pnpm lint         # 运行 ESLint
 **核心状态结构：**
 - `members`: 家庭成员数组，包含快捷积分项和总积分
 - `logs`: 所有积分操作记录（加分/扣分/撤销）及时间戳
+- `categories`: 模板分类数组（学习类、家务类、行为类等）
+- `templates`: 全局快捷操作模板数组
+- `bulletin`: 公告栏内容
 
 **重要模式：**
 - 所有状态变更必须通过 store actions 进行 - 组件中永远不要直接修改状态
@@ -47,6 +50,8 @@ pnpm lint         # 运行 ESLint
 - `member/` - 成员管理（MemberCard、MemberList、AddMemberDialog、EditMemberDialog、QuickItemsManager）
 - `points/` - 积分操作（ManualPointsDialog）
 - `log/` - 操作历史（MemberLogDialog、LogItem）
+- `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateManagerDialog、TemplateImportDialog）
+- `bulletin/` - 公告栏（BulletinSection）
 - `ui/` - shadcn/ui 基础组件
 
 **对话框模式：**
@@ -67,10 +72,75 @@ pnpm lint         # 运行 ESLint
    - 如果项目名称已存在于快捷项中，直接关闭对话框
    - 如果项目名称不存在，弹出 AlertDialog 询问是否添加为快捷操作
 5. 用户可通过成员卡片上的设置按钮管理快捷项
+6. **从模板导入**：用户可从全局模板批量导入快捷项到成员
 
 **向后兼容性：**
 - 现有快捷项如果没有 `operationType` 字段，默认为 'add'（加分）
 - 新创建的快捷项必须指定 `operationType`
+
+### 快捷操作模板系统
+
+系统提供全局快捷操作模板，按分类组织（如学习类、家务类、行为类）。模板可批量导入到成员的快捷项中。
+
+**模板分类：**
+- 每个分类包含名称和排序字段
+- 删除分类会级联删除该分类下的所有模板
+- 支持完整的增删改查操作
+
+**模板项：**
+- 包含名称、分数、操作类型（加分/扣分）
+- 每个模板关联到一个分类
+- 支持完整的增删改查操作
+
+**批量导入功能：**
+- 从主页面"批量导入"按钮打开导入对话框
+- 从 QuickItemsManager 中的"从模板导入"按钮打开（预选当前成员）
+- 多选界面，按分类分组显示
+- 支持按分类全选/取消全选
+- 显示已选数量
+- 允许重复导入（同一模板可多次导入到同一成员）
+
+**默认数据：**
+系统预置两个分类和十八个模板：
+
+加分项：
+- 跳绳 100 个：+1分
+- 摸高 50 个：+1分
+- 户外活动 1 小时：+2分
+- 九点半前睡觉：+2分
+- 20分钟内吃完饭：+2分
+- 期末考试获奖：+50分
+- 考试成绩优秀：+20分
+- 学校特殊表彰：+20分
+- 作业出色受到表扬：+5分
+
+扣分项：
+- 玩手机平板10分钟：-2分
+- 看电视15分钟：-2分
+- 电脑游戏 30 分钟：-10分
+- 提现 5 元：-5分
+- 十点半之后睡：-2分
+- 不认真吃饭：-1分
+- 在学校受到严厉批评：-10分
+- 起床拖拉上学迟到：-2分
+- 让妈妈生气：-5分
+
+### 公告栏系统
+
+公告栏提供大字体显示，适合平板端远距离查看。
+
+**功能特性：**
+- 大字体显示（移动端 text-2xl，桌面端 text-3xl）
+- 对话框编辑模式
+- 支持多行文本（换行符保留）
+- 内容持久化到 localStorage
+- 实时保存，无需确认按钮
+
+**布局位置：**
+- 位于成员卡片下方
+- 左侧 3/4 宽度：快捷操作模板
+- 右侧 1/4 宽度：公告栏
+- 移动端自动堆叠为单列布局
 
 ### 操作日志系统
 
@@ -91,7 +161,11 @@ pnpm lint         # 运行 ESLint
 - `Member` - 家庭成员，包含快捷项和总积分
 - `QuickPointItem` - 积分操作的快捷配置，支持 `operationType` 字段
 - `PointLog` - 操作记录，包含撤销状态和关联日志引用
+- `TemplateCategory` - 模板分类
+- `TemplateItem` - 全局快捷操作模板
+- `Bulletin` - 公告栏内容
 - `AppState` - Zustand store 接口，包含所有状态和操作
+- `TemplateState` - 模板和公告相关的状态和操作
 
 ### 工具函数
 
@@ -105,9 +179,15 @@ pnpm lint         # 运行 ESLint
 
 Zustand store 使用 `persist` 中间件：
 - localStorage 键名为 `family-points-storage`
-- 当前版本为 2（version 字段）
+- 当前版本为 4（version 字段）
 - 数据在页面刷新和浏览器重启后保留
 - 如需重置数据，清除 localStorage 或使用浏览器开发者工具
+
+**版本迁移：**
+- 版本 2 → 版本 3：添加了模板分类、模板项和公告栏
+- 版本 3 → 版本 4：更新默认模板内容为18个新模板（加分项9个、扣分项9个）
+- 迁移时自动初始化默认分类和模板
+- 用户现有数据（成员、日志）完整保留
 
 ## UI 组件
 
@@ -116,7 +196,7 @@ Zustand store 使用 `persist` 中间件：
 pnpm dlx shadcn@latest add <组件名称>
 ```
 
-已有组件：button、dialog、input、card、alert-dialog、scroll-area
+已有组件：button、dialog、input、card、alert-dialog、scroll-area、checkbox、tabs、textarea、label
 
 ## 样式
 
@@ -183,3 +263,35 @@ const logs = useAppStore((state) =>
 - 成员本身
 - 该成员的所有日志
 - 无法撤销此操作
+
+### 模板管理注意事项
+- 模板是全局的，不属于任何特定成员
+- 模板可以重复导入到同一成员（创建独立的快捷项）
+- 删除分类会级联删除该分类下的所有模板
+- 默认模板在首次加载时自动创建
+
+### React Hooks 最佳实践
+**避免在 useEffect 中直接调用 setState：**
+- 使用 `onOpenChange` 回调处理对话框关闭时的状态重置
+- 使用初始状态而非 useEffect 来同步 props 到 state
+
+```typescript
+// ✅ 正确 - 使用 onOpenChange 回调
+const handleOpenChange = (newOpen: boolean) => {
+  if (!newOpen) {
+    setSelectedId('');
+    setSelectedItems(new Set());
+  }
+  onOpenChange(newOpen);
+};
+
+// ✅ 正确 - 使用初始状态
+const [selectedId, setSelectedId] = useState<string>(memberId || '');
+
+// ❌ 错误 - 在 useEffect 中调用 setState
+useEffect(() => {
+  if (open && memberId) {
+    setSelectedMemberId(memberId);
+  }
+}, [open, memberId]);
+```

@@ -12,8 +12,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit2, Minus } from 'lucide-react';
+import { Plus, Trash2, Edit2, Minus, Download } from 'lucide-react';
 import type { Member, QuickPointItem } from '@/types';
+import { TemplateImportDialog } from '@/components/template/TemplateImportDialog';
 
 interface QuickItemsManagerProps {
   member: Member | null;
@@ -29,8 +30,14 @@ interface EditingItem {
 }
 
 export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsManagerProps) {
-  const [editingItem, setEditingItem] = useState<EditingItem>({ id: null, name: '', points: '10', operationType: 'add' });
+  const [editingItem, setEditingItem] = useState<EditingItem>({
+    id: null,
+    name: '',
+    points: '10',
+    operationType: 'add'
+  });
   const [isAdding, setIsAdding] = useState(false);
+  const [templateImportOpen, setTemplateImportOpen] = useState(false);
 
   const addQuickItem = useAppStore((state) => state.addQuickItem);
   const updateQuickItem = useAppStore((state) => state.updateQuickItem);
@@ -214,6 +221,16 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             关闭
           </Button>
+          {!isAdding && member && (
+            <Button
+              variant="secondary"
+              onClick={() => setTemplateImportOpen(true)}
+              className="mr-auto"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              从模板导入
+            </Button>
+          )}
           {!isAdding && (
             <Button onClick={startAdding}>
               <Plus className="mr-2 h-4 w-4" />
@@ -222,6 +239,14 @@ export function QuickItemsManager({ member, open, onOpenChange }: QuickItemsMana
           )}
         </DialogFooter>
       </DialogContent>
+
+      {member && (
+        <TemplateImportDialog
+          open={templateImportOpen}
+          onOpenChange={setTemplateImportOpen}
+          memberId={member.id}
+        />
+      )}
     </Dialog>
   );
 }
