@@ -52,6 +52,7 @@ pnpm lint         # 运行 ESLint
 - `log/` - 操作历史（MemberLogDialog、LogItem）
 - `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateManagerDialog、TemplateImportDialog）
 - `bulletin/` - 公告栏（BulletinSection）
+- `backup/` - 数据备份（BackupButton、BackupDialog、ExportImportDialog）
 - `ui/` - shadcn/ui 基础组件
 
 **对话框模式：**
@@ -166,6 +167,9 @@ pnpm lint         # 运行 ESLint
 - `Bulletin` - 公告栏内容
 - `AppState` - Zustand store 接口，包含所有状态和操作
 - `TemplateState` - 模板和公告相关的状态和操作
+- `BackupConfig` - 备份配置（Gist ID、GitHub Token、最后同步时间）
+- `GistResponse` - GitHub Gist API 响应类型
+- `GistFile` - Gist 文件类型
 
 ### 工具函数
 
@@ -174,6 +178,16 @@ pnpm lint         # 运行 ESLint
 - `getOperationTypeText()` - 将操作类型映射为中文文本
 - `getOperationTypeColor()` - 返回操作类型的 Tailwind 颜色类
 - `cn()` - 合并 Tailwind 类的工具函数
+
+[lib/backup.ts](lib/backup.ts) 包含数据备份相关函数：
+- `getAppData()` - 从 localStorage 获取应用数据
+- `saveAppData()` - 将数据保存到 localStorage 并刷新页面
+- `uploadToGist()` - 上传数据到 GitHub Gist
+- `downloadFromGist()` - 从 GitHub Gist 下载数据
+- `createGist()` - 创建新的 GitHub Gist
+- `validateGistConfig()` - 验证 Gist 配置是否有效
+- `exportToZip()` - 导出数据为 ZIP 文件
+- `importFromZip()` - 从 ZIP 文件导入数据
 
 ### 数据持久化
 
@@ -196,7 +210,7 @@ Zustand store 使用 `persist` 中间件：
 pnpm dlx shadcn@latest add <组件名称>
 ```
 
-已有组件：button、dialog、input、card、alert-dialog、scroll-area、checkbox、tabs、textarea、label
+已有组件：button、dialog、input、card、alert-dialog、scroll-area、checkbox、tabs、textarea、label、alert
 
 ## 样式
 
@@ -295,3 +309,87 @@ useEffect(() => {
   }
 }, [open, memberId]);
 ```
+
+## 数据备份系统
+
+系统提供两种数据备份方式，确保数据安全和跨设备同步。
+
+### 1. GitHub Gist 同步（推荐）
+
+通过 GitHub Gist API 实现云端备份和多设备同步。
+
+**配置要求：**
+- GitHub Personal Access Token（需要 `gist` 权限）
+- Gist ID（可自动创建新 Gist 或手动输入已存在的 Gist ID）
+
+**使用流程：**
+1. 点击页面右上角的 "Gist 同步" 按钮
+2. 填写 GitHub Token（在 GitHub Settings {'->'} Developer settings {'->'} Personal access tokens {'->'} Tokens (classic) 创建）
+3. 点击"创建新 Gist"自动生成 Gist ID，或手动输入已存在的 Gist ID
+4. 点击"验证配置"确认配置正确
+5. 点击"保存配置"保存到 localStorage
+6. 使用"上传到 Gist"备份数据
+7. 使用"从 Gist 下载"恢复数据（会自动刷新页面）
+
+**技术实现：**
+- 使用 GitHub Gist REST API（`https://api.github.com/gists`）
+- 数据文件名：`family-points-data.json`
+- 支持创建和更新 Gist
+- 自动更新 Gist 描述为备份时间
+
+**配置存储：**
+- 配置信息存储在 localStorage 的 `backup-config` 键中
+- 包含：`gistId`、`githubToken`、`lastSyncTime`
+
+### 2. ZIP 文件导出/导入（备用方案）
+
+当 GitHub 不可用时，可使用 ZIP 文件进行本地备份。
+
+**导出功能：**
+- 点击"导出/导入"按钮
+- 点击"导出 ZIP 文件"
+- 系统将 `family-points-data.json` 打包成 ZIP 文件并自动下载
+- 文件名格式：`family-points-backup-YYYY-MM-DD.zip`
+
+**导入功能：**
+- 点击"导出/导入"按钮
+- 选择 ZIP 文件
+- 系统自动解压并读取数据文件
+- 导入后会覆盖当前数据并自动刷新页面
+
+**技术实现：**
+- 使用 `jszip` 库处理 ZIP 文件
+- 导出：JSON {'->'} ZIP Blob {'->} 下载
+- 导入：File {'->'} JSZip {'->'} JSON {'->'} localStorage
+
+### 组件结构
+
+**[src/components/backup/BackupButton.tsx](src/components/backup/BackupButton.tsx)**
+- 主入口组件，显示两个按钮
+- 管理 Gist 同步对话框和导出/导入对话框的开关状态
+
+**[src/components/backup/BackupDialog.tsx](src/components/backup/BackupDialog.tsx)**
+- Gist 同步配置对话框
+- 包含配置表单、验证逻辑、上传/下载功能
+- 显示操作成功/失败消息
+
+**[src/components/backup/ExportImportDialog.tsx](src/components/backup/ExportImportDialog.tsx)**
+- 导出/导入对话框
+- 提供导出按钮和文件选择器
+- 显示操作状态和结果
+
+### 使用建议
+
+1. **首次使用**：配置 GitHub Token 并创建新 Gist
+2. **定期备份**：每次重要操作后点击"上传到 Gist"
+3. **跨设备同步**：在多设备上使用相同的 Gist ID 和 Token
+4. **网络问题**：使用"导出 ZIP"作为备用方案
+5. **数据迁移**：导出 ZIP 文件可长期保存，用于数据恢复
+
+### 安全注意事项
+
+- GitHub Token 存储在浏览器 localStorage 中，仅用于 Gist API 调用
+- Token 只需要 `gist` 权限，不需要访问其他 GitHub 资源
+- 建议创建专用的 Fine-grained token 或 classic token
+- Gist 默认为私有（public: false）
+- 定期更新 Token 以提高安全性

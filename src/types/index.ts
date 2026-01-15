@@ -100,3 +100,25 @@ export interface TemplateState {
   // 公告操作
   updateBulletin: (content: string) => void;
 }
+
+// 备份配置
+export interface BackupConfig {
+  gistId: string; // Gist ID
+  githubToken: string; // GitHub Personal Access Token
+  lastSyncTime?: number; // 最后同步时间戳
+}
+
+// Gist API 响应类型
+export interface GistFile {
+  filename?: string;
+  content?: string;
+  raw_url?: string;
+}
+
+export interface GistResponse {
+  id: string;
+  files: Record<string, GistFile>;
+  created_at: string;
+  updated_at: string;
+  description?: string;
+}
