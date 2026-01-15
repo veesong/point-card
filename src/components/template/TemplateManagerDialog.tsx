@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Trash2, Edit2, Minus } from 'lucide-react';
 import type { TemplateItem } from '@/types';
 
@@ -193,19 +194,21 @@ export function TemplateManagerDialog({ open, onOpenChange }: TemplateManagerDia
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle>管理模板</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="categories">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="categories">分类管理</TabsTrigger>
-            <TabsTrigger value="templates">项目管理</TabsTrigger>
-          </TabsList>
+        <ScrollArea className="px-6" style={{ height: 'calc(90vh - 180px)' }}>
+          <div className="pb-4">
+            <Tabs defaultValue="categories" className="mt-0">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="categories">分类管理</TabsTrigger>
+              <TabsTrigger value="templates">项目管理</TabsTrigger>
+            </TabsList>
 
-          {/* 分类管理 */}
-          <TabsContent value="categories" className="space-y-4">
+            {/* 分类管理 */}
+            <TabsContent value="categories" className="space-y-4 mt-6">
             {isAddingCategory && (
               <div className="space-y-2 p-4 border rounded-md bg-muted/50">
                 <Label htmlFor="new-category-name">分类名称</Label>
@@ -486,8 +489,10 @@ export function TemplateManagerDialog({ open, onOpenChange }: TemplateManagerDia
             </div>
           </TabsContent>
         </Tabs>
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             关闭
           </Button>

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface TemplateImportDialogProps {
   open: boolean;
@@ -86,12 +87,12 @@ export function TemplateImportDialog({ open, onOpenChange, memberId }: TemplateI
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 flex-shrink-0">
           <DialogTitle>批量导入模板到成员</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="px-6 py-4 flex-shrink-0">
           {/* 成员选择 */}
           <div>
             <Label htmlFor="member-select">选择成员</Label>
@@ -110,10 +111,13 @@ export function TemplateImportDialog({ open, onOpenChange, memberId }: TemplateI
               ))}
             </select>
           </div>
+        </div>
 
-          {/* 模板多选 */}
-          {selectedMemberId &&
-            templatesByCategory.map((category) => {
+        <ScrollArea className="px-6" style={{ height: 'calc(90vh - 240px)' }}>
+          <div className="pb-4">
+            {/* 模板多选 */}
+            {selectedMemberId &&
+              templatesByCategory.map((category) => {
               const categoryTemplateIds = category.templates.map((t) => t.id);
               const allSelected = isCategoryAllSelected(categoryTemplateIds);
 
@@ -155,9 +159,10 @@ export function TemplateImportDialog({ open, onOpenChange, memberId }: TemplateI
                 </div>
               );
             })}
-        </div>
+          </div>
+        </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-4 flex-shrink-0">
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
             取消
           </Button>
