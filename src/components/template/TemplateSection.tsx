@@ -4,10 +4,12 @@ import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TemplateCardItem } from './TemplateCardItem';
 import { TemplateManagerDialog } from './TemplateManagerDialog';
 import { TemplateImportDialog } from './TemplateImportDialog';
 import { Settings, Download } from 'lucide-react';
+import type { TemplateDisplayMode } from '@/types';
 
 export function TemplateSection() {
   const [managerOpen, setManagerOpen] = useState(false);
@@ -17,18 +19,46 @@ export function TemplateSection() {
   const templates = useAppStore((state) => state.templates);
   const members = useAppStore((state) => state.members);
   const _hasHydrated = useAppStore((state) => state._hasHydrated);
+  const displayMode = useAppStore((state) => state.templateDisplayMode);
+  const setTemplateDisplayMode = useAppStore((state) => state.setTemplateDisplayMode);
 
   // 按分类分组模板，只显示可见的
   const templatesByCategory = useMemo(() => {
-    return categories
-      .map((category) => ({
-        ...category,
-        templates: templates.filter(
-          (t) => t.categoryId === category.id && (t.isVisible !== false)
-        )
-      }))
-      .filter((category) => category.templates.length > 0); // 过滤掉空分类
-  }, [categories, templates]);
+    if (displayMode === 'operationType') {
+      // 按操作类型分组（加分/扣分）
+      const addTemplates = templates.filter(
+        (t) => t.operationType === 'add' && t.isVisible !== false
+      );
+      const deductTemplates = templates.filter(
+        (t) => t.operationType === 'deduct' && t.isVisible !== false
+      );
+
+      return [
+        {
+          id: 'add',
+          name: '加分',
+          sortOrder: 0,
+          templates: addTemplates
+        },
+        {
+          id: 'deduct',
+          name: '扣分',
+          sortOrder: 1,
+          templates: deductTemplates
+        }
+      ].filter(group => group.templates.length > 0);
+    } else {
+      // 按实际分类分组
+      return categories
+        .map((category) => ({
+          ...category,
+          templates: templates.filter(
+            (t) => t.categoryId === category.id && (t.isVisible !== false)
+          )
+        }))
+        .filter((category) => category.templates.length > 0); // 过滤掉空分类
+    }
+  }, [categories, templates, displayMode]);
 
   // 显示加载骨架屏
   if (!_hasHydrated) {
@@ -50,7 +80,15 @@ export function TemplateSection() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">快捷操作模板</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold">快捷操作模板</h2>
+          <Tabs value={displayMode} onValueChange={(value) => setTemplateDisplayMode(value as TemplateDisplayMode)}>
+            <TabsList>
+              <TabsTrigger value="operationType">加分/扣分</TabsTrigger>
+              <TabsTrigger value="category">分类展示</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         <div className="flex gap-2">
           {members.length > 0 && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>

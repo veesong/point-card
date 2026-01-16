@@ -78,12 +78,16 @@ export interface AppState {
   canUndoLog: (logId: string) => boolean;
 }
 
+// 模板展示模式
+export type TemplateDisplayMode = 'operationType' | 'category';
+
 // 模板和公告状态
 export interface TemplateState {
   categories: TemplateCategory[];
   templates: TemplateItem[];
   bulletin: Bulletin;
   _hasHydrated?: boolean; // 数据水合完成标记
+  templateDisplayMode: TemplateDisplayMode; // 模板展示模式
 
   // 分类操作
   addCategory: (name: string) => void;
@@ -102,6 +106,7 @@ export interface TemplateState {
   toggleTemplateVisibility: (id: string) => void;
   setTemplateVisibility: (id: string, isVisible: boolean) => void;
   setAllTemplatesVisibility: (categoryId: string, isVisible: boolean) => void;
+  setTemplateDisplayMode: (mode: TemplateDisplayMode) => void;
 
   // 公告操作
   updateBulletin: (content: string) => void;
