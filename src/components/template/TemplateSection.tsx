@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { TemplateCategory } from './TemplateCategory';
+import { TemplateCardItem } from './TemplateCardItem';
 import { TemplateManagerDialog } from './TemplateManagerDialog';
 import { TemplateImportDialog } from './TemplateImportDialog';
 import { Settings, Download } from 'lucide-react';
@@ -18,11 +18,17 @@ export function TemplateSection() {
   const members = useAppStore((state) => state.members);
   const _hasHydrated = useAppStore((state) => state._hasHydrated);
 
-  // 按分类分组模板
-  const templatesByCategory = categories.map((category) => ({
-    ...category,
-    templates: templates.filter((t) => t.categoryId === category.id)
-  }));
+  // 按分类分组模板，只显示可见的
+  const templatesByCategory = useMemo(() => {
+    return categories
+      .map((category) => ({
+        ...category,
+        templates: templates.filter(
+          (t) => t.categoryId === category.id && (t.isVisible !== false)
+        )
+      }))
+      .filter((category) => category.templates.length > 0); // 过滤掉空分类
+  }, [categories, templates]);
 
   // 显示加载骨架屏
   if (!_hasHydrated) {
@@ -65,14 +71,31 @@ export function TemplateSection() {
           <p className="text-sm">点击&ldquo;管理模板&rdquo;按钮开始创建</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {templatesByCategory.map((category) => (
-            <TemplateCategory
-              key={category.id}
-              category={category}
-              templates={category.templates}
-            />
-          ))}
+        <div className="grid grid-cols-1 gap-4">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">常用操作</h3>
+            {templatesByCategory.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>没有显示的模板项</p>
+                <p className="text-sm mt-1">点击&ldquo;管理模板&rdquo;中的&ldquo;展示设置&rdquo;来选择要显示的项目</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {templatesByCategory.map((category) => (
+                  <div key={category.id}>
+                    <h4 className="text-sm font-medium text-muted-foreground mb-3">
+                      {category.name}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {category.templates.map((template) => (
+                        <TemplateCardItem key={template.id} template={template} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
       )}
 

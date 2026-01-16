@@ -5,25 +5,25 @@ import type { AppState, TemplateState, Member, PointLog, TemplateCategory, Templ
 // 默认模板数据
 const defaultTemplates = [
   // 加分项
-  { id: 't1', categoryId: 'default-1', name: '跳绳 100 个', points: 1, operationType: 'add' as const },
-  { id: 't2', categoryId: 'default-1', name: '摸高 50 个', points: 1, operationType: 'add' as const },
-  { id: 't3', categoryId: 'default-1', name: '户外活动 1 小时', points: 2, operationType: 'add' as const },
-  { id: 't4', categoryId: 'default-1', name: '九点半前睡觉', points: 2, operationType: 'add' as const },
-  { id: 't5', categoryId: 'default-1', name: '20分钟内吃完饭', points: 2, operationType: 'add' as const },
-  { id: 't6', categoryId: 'default-1', name: '期末考试获奖', points: 50, operationType: 'add' as const },
-  { id: 't7', categoryId: 'default-1', name: '考试成绩优秀', points: 20, operationType: 'add' as const },
-  { id: 't8', categoryId: 'default-1', name: '学校特殊表彰', points: 20, operationType: 'add' as const },
-  { id: 't9', categoryId: 'default-1', name: '作业出色受到表扬', points: 5, operationType: 'add' as const },
+  { id: 't1', categoryId: 'default-1', name: '跳绳 100 个', points: 1, operationType: 'add' as const, isVisible: true },
+  { id: 't2', categoryId: 'default-1', name: '摸高 50 个', points: 1, operationType: 'add' as const, isVisible: true },
+  { id: 't3', categoryId: 'default-1', name: '户外活动 1 小时', points: 2, operationType: 'add' as const, isVisible: true },
+  { id: 't4', categoryId: 'default-1', name: '九点半前睡觉', points: 2, operationType: 'add' as const, isVisible: true },
+  { id: 't5', categoryId: 'default-1', name: '20分钟内吃完饭', points: 2, operationType: 'add' as const, isVisible: true },
+  { id: 't6', categoryId: 'default-1', name: '期末考试获奖', points: 50, operationType: 'add' as const, isVisible: true },
+  { id: 't7', categoryId: 'default-1', name: '考试成绩优秀', points: 20, operationType: 'add' as const, isVisible: true },
+  { id: 't8', categoryId: 'default-1', name: '学校特殊表彰', points: 20, operationType: 'add' as const, isVisible: true },
+  { id: 't9', categoryId: 'default-1', name: '作业出色受到表扬', points: 5, operationType: 'add' as const, isVisible: true },
   // 扣分项
-  { id: 't10', categoryId: 'default-2', name: '玩手机平板10分钟', points: 2, operationType: 'deduct' as const },
-  { id: 't11', categoryId: 'default-2', name: '看电视15分钟', points: 2, operationType: 'deduct' as const },
-  { id: 't12', categoryId: 'default-2', name: '电脑游戏 30 分钟', points: 10, operationType: 'deduct' as const },
-  { id: 't13', categoryId: 'default-2', name: '提现 5 元', points: 5, operationType: 'deduct' as const },
-  { id: 't14', categoryId: 'default-2', name: '十点半之后睡', points: 2, operationType: 'deduct' as const },
-  { id: 't15', categoryId: 'default-2', name: '不认真吃饭', points: 1, operationType: 'deduct' as const },
-  { id: 't16', categoryId: 'default-2', name: '在学校受到严厉批评', points: 10, operationType: 'deduct' as const },
-  { id: 't17', categoryId: 'default-2', name: '起床拖拉上学迟到', points: 2, operationType: 'deduct' as const },
-  { id: 't18', categoryId: 'default-2', name: '让妈妈生气', points: 5, operationType: 'deduct' as const }
+  { id: 't10', categoryId: 'default-2', name: '玩手机平板10分钟', points: 2, operationType: 'deduct' as const, isVisible: true },
+  { id: 't11', categoryId: 'default-2', name: '看电视15分钟', points: 2, operationType: 'deduct' as const, isVisible: true },
+  { id: 't12', categoryId: 'default-2', name: '电脑游戏 30 分钟', points: 10, operationType: 'deduct' as const, isVisible: true },
+  { id: 't13', categoryId: 'default-2', name: '提现 5 元', points: 5, operationType: 'deduct' as const, isVisible: true },
+  { id: 't14', categoryId: 'default-2', name: '十点半之后睡', points: 2, operationType: 'deduct' as const, isVisible: true },
+  { id: 't15', categoryId: 'default-2', name: '不认真吃饭', points: 1, operationType: 'deduct' as const, isVisible: true },
+  { id: 't16', categoryId: 'default-2', name: '在学校受到严厉批评', points: 10, operationType: 'deduct' as const, isVisible: true },
+  { id: 't17', categoryId: 'default-2', name: '起床拖拉上学迟到', points: 2, operationType: 'deduct' as const, isVisible: true },
+  { id: 't18', categoryId: 'default-2', name: '让妈妈生气', points: 5, operationType: 'deduct' as const, isVisible: true }
 ];
 
 const defaultCategories = [
@@ -307,6 +307,31 @@ export const useAppStore = create<AppState & TemplateState>()(
         }));
       },
 
+      // 展示管理操作
+      toggleTemplateVisibility: (id: string) => {
+        set((state) => ({
+          templates: state.templates.map((tmpl) =>
+            tmpl.id === id ? { ...tmpl, isVisible: !tmpl.isVisible } : tmpl
+          )
+        }));
+      },
+
+      setTemplateVisibility: (id: string, isVisible: boolean) => {
+        set((state) => ({
+          templates: state.templates.map((tmpl) =>
+            tmpl.id === id ? { ...tmpl, isVisible } : tmpl
+          )
+        }));
+      },
+
+      setAllTemplatesVisibility: (categoryId: string, isVisible: boolean) => {
+        set((state) => ({
+          templates: state.templates.map((tmpl) =>
+            tmpl.categoryId === categoryId ? { ...tmpl, isVisible } : tmpl
+          )
+        }));
+      },
+
       // 公告操作
       updateBulletin: (content: string) => {
         set((state) => ({
@@ -320,16 +345,21 @@ export const useAppStore = create<AppState & TemplateState>()(
     }),
     {
       name: 'family-points-storage',
-      version: 4,
+      version: 5,
       migrate: (persistedState: unknown, version: number) => {
-        if (version === 2) {
-          // 从版本 2 迁移到版本 4
-          const state = persistedState as AppState;
+        if (version === 2 || version === 3 || version === 4) {
+          // 从版本 2/3/4 迁移到版本 5
+          const state = persistedState as AppState & Partial<TemplateState>;
           return {
             ...state,
-            categories: defaultCategories,
-            templates: defaultTemplates,
-            bulletin: defaultBulletin
+            categories: state.categories || defaultCategories,
+            templates: state.templates
+              ? state.templates.map((t) => ({
+                  ...t,
+                  isVisible: t.isVisible !== undefined ? t.isVisible : true
+                }))
+              : defaultTemplates,
+            bulletin: state.bulletin || defaultBulletin
           };
         }
 

@@ -45,6 +45,7 @@ export interface TemplateItem {
   name: string;
   points: number;
   operationType: 'add' | 'deduct';
+  isVisible?: boolean; // 是否在主页面展示，默认为 true
 }
 
 // 公告栏内容
@@ -96,6 +97,11 @@ export interface TemplateState {
 
   // 批量导入操作
   importTemplatesToMember: (memberId: string, templateIds: string[]) => void;
+
+  // 展示管理操作
+  toggleTemplateVisibility: (id: string) => void;
+  setTemplateVisibility: (id: string, isVisible: boolean) => void;
+  setAllTemplatesVisibility: (categoryId: string, isVisible: boolean) => void;
 
   // 公告操作
   updateBulletin: (content: string) => void;

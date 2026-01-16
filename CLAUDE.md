@@ -51,7 +51,7 @@ pnpm lint         # 运行 ESLint
 - `points/` - 积分操作（ManualPointsDialog）
 - `log/` - 操作历史（MemberLogDialog、LogItem）
 - `statistics/` - 统计图表（StatisticsDialog、PieChartSection、BarChartSection）
-- `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateManagerDialog、TemplateImportDialog）
+- `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateCardItem、TemplateManagerDialog、TemplateImportDialog）
 - `bulletin/` - 公告栏（BulletinSection）
 - `backup/` - 数据备份（BackupButton、BackupDialog、ExportImportDialog）
 - `ui/` - shadcn/ui 基础组件
@@ -82,7 +82,15 @@ pnpm lint         # 运行 ESLint
 
 ### 快捷操作模板系统
 
-系统提供全局快捷操作模板，按分类组织（如学习类、家务类、行为类）。模板可批量导入到成员的快捷项中。
+系统提供全局快捷操作模板，按分类组织（如加分项、扣分项等）。模板可批量导入到成员的快捷项中。
+
+**模板展示选择功能：**
+- 每个模板都有 `isVisible` 字段控制是否在主页面的"常用操作"区域显示
+- 在"管理模板"对话框的"展示设置"标签页中，用户可以通过复选框控制每个模板的可见性
+- 支持按分类批量显示/隐藏该分类下的所有模板
+- 主页面只显示 `isVisible !== false` 的模板项
+- 按分类分组展示，使用响应式卡片网格布局
+- 统一展示框内显示所有可见的模板，空状态时显示友好提示
 
 **模板分类：**
 - 每个分类包含名称和排序字段
@@ -91,6 +99,7 @@ pnpm lint         # 运行 ESLint
 
 **模板项：**
 - 包含名称、分数、操作类型（加分/扣分）
+- 包含 `isVisible` 字段（可选，默认为 true）
 - 每个模板关联到一个分类
 - 支持完整的增删改查操作
 
@@ -102,10 +111,19 @@ pnpm lint         # 运行 ESLint
 - 显示已选数量
 - 允许重复导入（同一模板可多次导入到同一成员）
 
+**展示设置功能：**
+- 在"管理模板"对话框中新增第三个标签页"展示设置"
+- 按分类分组显示所有模板项
+- 每个分类有复选框，支持全选/取消全选该分类下所有模板
+- 显示每个分类的可见数量统计（例如：9/9）
+- 每个模板项有独立的复选框，控制是否在主页面显示
+- 点击复选框或标签均可切换状态
+- 修改立即生效，自动保存到 localStorage
+
 **默认数据：**
 系统预置两个分类和十八个模板：
 
-加分项：
+加分项（9个）：
 - 跳绳 100 个：+1分
 - 摸高 50 个：+1分
 - 户外活动 1 小时：+2分
@@ -116,7 +134,7 @@ pnpm lint         # 运行 ESLint
 - 学校特殊表彰：+20分
 - 作业出色受到表扬：+5分
 
-扣分项：
+扣分项（9个）：
 - 玩手机平板10分钟：-2分
 - 看电视15分钟：-2分
 - 电脑游戏 30 分钟：-10分
@@ -140,8 +158,8 @@ pnpm lint         # 运行 ESLint
 
 **布局位置：**
 - 位于成员卡片下方
-- 左侧 3/4 宽度：快捷操作模板
-- 右侧 1/4 宽度：公告栏
+- 左侧 1/4 宽度：公告栏
+- 右侧 3/4 宽度：快捷操作模板
 - 移动端自动堆叠为单列布局
 
 ### 操作日志系统
@@ -241,10 +259,10 @@ pnpm lint         # 运行 ESLint
 - `QuickPointItem` - 积分操作的快捷配置，支持 `operationType` 字段
 - `PointLog` - 操作记录，包含撤销状态和关联日志引用
 - `TemplateCategory` - 模板分类
-- `TemplateItem` - 全局快捷操作模板
+- `TemplateItem` - 全局快捷操作模板，包含 `isVisible` 字段
 - `Bulletin` - 公告栏内容
 - `AppState` - Zustand store 接口，包含所有状态和操作
-- `TemplateState` - 模板和公告相关的状态和操作
+- `TemplateState` - 模板和公告相关的状态和操作，包含展示管理操作
 - `BackupConfig` - 备份配置（Gist ID、GitHub Token、最后同步时间）
 - `GistResponse` - GitHub Gist API 响应类型
 - `GistFile` - Gist 文件类型
@@ -288,14 +306,15 @@ pnpm lint         # 运行 ESLint
 
 Zustand store 使用 `persist` 中间件：
 - localStorage 键名为 `family-points-storage`
-- 当前版本为 4（version 字段）
+- 当前版本为 5（version 字段）
 - 数据在页面刷新和浏览器重启后保留
 - 如需重置数据，清除 localStorage 或使用浏览器开发者工具
 
 **版本迁移：**
 - 版本 2 → 版本 3：添加了模板分类、模板项和公告栏
 - 版本 3 → 版本 4：更新默认模板内容为18个新模板（加分项9个、扣分项9个）
-- 迁移时自动初始化默认分类和模板
+- 版本 4 → 版本 5：添加模板展示选择功能（`isVisible` 字段）
+- 迁移时自动为现有模板添加 `isVisible: true`
 - 用户现有数据（成员、日志）完整保留
 
 ## UI 组件
@@ -382,6 +401,28 @@ const logs = useAppStore((state) =>
 - 模板可以重复导入到同一成员（创建独立的快捷项）
 - 删除分类会级联删除该分类下的所有模板
 - 默认模板在首次加载时自动创建
+- 模板的 `isVisible` 字段控制是否在主页面显示，默认为 true
+
+### 模板展示组件结构
+
+**[src/components/template/TemplateCardItem.tsx](src/components/template/TemplateCardItem.tsx)**
+- 卡片样式的模板项展示组件
+- 显示模板名称、加分/扣分图标和分数
+- 使用颜色区分加分（绿色）和扣分（红色）
+- 支持悬停阴影效果
+
+**[src/components/template/TemplateSection.tsx](src/components/template/TemplateSection.tsx)**
+- 主展示区域，使用统一的卡片容器
+- 通过 `useMemo` 过滤可见模板（`isVisible !== false`）
+- 按分类分组展示，每个分类有独立的标题
+- 使用响应式网格布局（移动端 1 列，平板 2-3 列，桌面 3-4 列）
+- 空状态时显示友好提示
+
+**[src/components/template/TemplateManagerDialog.tsx](src/components/template/TemplateManagerDialog.tsx)**
+- 管理模板的对话框，包含三个标签页：
+  - 分类管理：增删改查模板分类
+  - 项目管理：增删改查模板项
+  - 展示设置：控制每个模板的可见性
 
 ### React Hooks 最佳实践
 **避免在 useEffect 中直接调用 setState：**

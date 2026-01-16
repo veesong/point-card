@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -55,6 +56,8 @@ export function TemplateManagerDialog({ open, onOpenChange }: TemplateManagerDia
   const addTemplate = useAppStore((state) => state.addTemplate);
   const updateTemplate = useAppStore((state) => state.updateTemplate);
   const deleteTemplate = useAppStore((state) => state.deleteTemplate);
+  const toggleTemplateVisibility = useAppStore((state) => state.toggleTemplateVisibility);
+  const setAllTemplatesVisibility = useAppStore((state) => state.setAllTemplatesVisibility);
 
   // 分类操作
   const handleAddCategory = () => {
@@ -202,9 +205,10 @@ export function TemplateManagerDialog({ open, onOpenChange }: TemplateManagerDia
         <ScrollArea className="px-6" style={{ height: 'calc(90vh - 180px)' }}>
           <div className="pb-4">
             <Tabs defaultValue="categories" className="mt-0">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="categories">分类管理</TabsTrigger>
               <TabsTrigger value="templates">项目管理</TabsTrigger>
+              <TabsTrigger value="visibility">展示设置</TabsTrigger>
             </TabsList>
 
             {/* 分类管理 */}
@@ -483,6 +487,80 @@ export function TemplateManagerDialog({ open, onOpenChange }: TemplateManagerDia
                         )}
                       </div>
                     ))}
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          {/* 展示设置 */}
+          <TabsContent value="visibility" className="space-y-4 mt-6">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                勾选要显示的模板项
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {categories.map((category) => {
+                const categoryTemplates = templates.filter((t) => t.categoryId === category.id);
+                const allVisible = categoryTemplates.length > 0 &&
+                  categoryTemplates.every((t) => t.isVisible !== false);
+
+                return (
+                  <div key={category.id} className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded-md bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`category-${category.id}`}
+                          checked={allVisible}
+                          onCheckedChange={() => {
+                            const newValue = !allVisible;
+                            setAllTemplatesVisibility(category.id, newValue);
+                          }}
+                        />
+                        <label
+                          htmlFor={`category-${category.id}`}
+                          className="font-medium cursor-pointer"
+                        >
+                          {category.name}
+                        </label>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {categoryTemplates.filter((t) => t.isVisible !== false).length} / {categoryTemplates.length}
+                      </span>
+                    </div>
+
+                    <div className="ml-6 space-y-2">
+                      {categoryTemplates.map((template) => (
+                        <div
+                          key={template.id}
+                          className="flex items-center gap-3 p-2 border rounded-md"
+                        >
+                          <Checkbox
+                            id={`template-${template.id}`}
+                            checked={template.isVisible !== false}
+                            onCheckedChange={() => toggleTemplateVisibility(template.id)}
+                          />
+                          <label
+                            htmlFor={`template-${template.id}`}
+                            className="flex-1 cursor-pointer"
+                          >
+                            {template.name}
+                          </label>
+                          <span
+                            className={`text-sm ${
+                              template.operationType === 'add'
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-red-600 dark:text-red-400'
+                            }`}
+                          >
+                            {template.operationType === 'add' ? '+' : '-'}
+                            {template.points}分
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 );
               })}
