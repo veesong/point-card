@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-这是一个使用 Next.js 16、React 19、TypeScript 和 Tailwind CSS 构建的家庭积分管理系统。它支持家庭成员的积分追踪，包括积分操作（加分/扣分）、快捷积分、操作日志和撤销功能。
+这是一个使用 Next.js 16、React 19、TypeScript 和 Tailwind CSS 构建的家庭积分管理系统。它支持家庭成员的积分追踪，包括积分操作（加分/扣分）、快捷积分、操作日志、撤销功能和统计图表。
 
 ## 开发命令
 
@@ -50,6 +50,7 @@ pnpm lint         # 运行 ESLint
 - `member/` - 成员管理（MemberCard、MemberList、AddMemberDialog、EditMemberDialog、QuickItemsManager）
 - `points/` - 积分操作（ManualPointsDialog）
 - `log/` - 操作历史（MemberLogDialog、LogItem）
+- `statistics/` - 统计图表（StatisticsDialog、PieChartSection、BarChartSection）
 - `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateManagerDialog、TemplateImportDialog）
 - `bulletin/` - 公告栏（BulletinSection）
 - `backup/` - 数据备份（BackupButton、BackupDialog、ExportImportDialog）
@@ -156,6 +157,77 @@ pnpm lint         # 运行 ESLint
 - 正确模式：先获取全部数据，再用 `useMemo` 过滤
 - 错误模式：在 selector 中直接过滤（会创建新引用导致重渲染）
 
+### 统计图表系统
+
+系统提供本周积分统计的可视化展示，帮助用户了解积分变化趋势。
+
+**功能特性：**
+- 每个成员卡片有"统计"按钮（柱状图图标），打开 StatisticsDialog
+- 使用标签页切换显示两种统计视图
+- 统计数据仅显示当前自然周（周一到周日）的记录
+- 使用 `useMemo` 优化性能，避免不必要的重计算
+- 响应式设计，支持移动端和桌面端
+
+**饼图统计（项目统计）：**
+- 分别显示加分项和扣分项的饼图
+- 每个饼图显示：项目名称、次数、总积分
+- 饼图下方附详细数据表格，表格中用彩色圆点标识对应项目
+- 两个饼图依次使用预设颜色，确保颜色不重复
+- 加分项和扣分项都使用正数显示
+
+**柱状图统计（每日统计）：**
+- 分组柱状图，显示周一到周日的每天数据
+- 加分和扣分并排显示，便于对比
+- X 轴：星期几（周一到周日）
+- Y 轴：积分
+- 鼠标悬停显示具体分数
+
+**图表库：**
+- 使用 Recharts 图表库（React 友好、TypeScript 支持、Tailwind CSS 兼容）
+- 图表配置文件：[src/lib/chartColors.ts](src/lib/chartColors.ts)
+- 20 个预设颜色（无黑色和白色），超出预设数量时自动生成新颜色
+
+**数据过滤规则：**
+- 只统计当前自然周的数据（周一 00:00:00 到周日 23:59:59）
+- 排除 `isUndone === true` 的日志
+- 排除 `operationType === 'undo'` 的日志
+- 只统计 `add` 和 `deduct` 操作
+
+**颜色方案：**
+- 预设 20 种鲜艳颜色：蓝色、深绿色、紫色、橙色、粉色、金黄色、青色、红色、蓝绿色、靛蓝色、皇家蓝、翠绿色、琥珀色、洋红色、朱红色、天蓝色、橄榄绿、玫瑰色、祖母绿、珊瑚色
+- 所有颜色使用具体 HSL 值（不使用 CSS 变量）
+- 柱状图：加分用蓝色（第 1 个颜色），扣分用深绿色（第 2 个颜色）
+- 饼图：依次使用预设颜色，加分项从第 0 个开始，扣分项从加分项之后继续
+
+**组件结构：**
+
+**[src/components/statistics/StatisticsDialog.tsx](src/components/statistics/StatisticsDialog.tsx)**
+- 主对话框组件，包含标签页切换
+- 显示当前周的日期范围
+- 管理数据过滤和转换逻辑
+
+**[src/components/statistics/PieChartSection.tsx](src/components/statistics/PieChartSection.tsx)**
+- 饼图组件，显示加分项和扣分项统计
+- 包含详细数据表格
+- 使用共享颜色配置
+
+**[src/components/statistics/BarChartSection.tsx](src/components/statistics/BarChartSection.tsx)**
+- 柱状图组件，显示每日加分和扣分统计
+- 分组柱状图设计
+
+**[src/lib/statistics.ts](src/lib/statistics.ts)**
+- 数据转换工具函数
+- `filterCurrentWeekLogs()` - 过滤当前周日志
+- `transformToAddPieChartData()` - 转换为加分项饼图数据
+- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（使用绝对值）
+- `transformToBarChartData()` - 转换为柱状图数据
+
+**[src/lib/chartColors.ts](src/lib/chartColors.ts)**
+- 图表颜色配置
+- `PRESET_COLORS` - 20 个预设颜色数组
+- `BAR_CHART_COLORS` - 柱状图专用颜色（加分、扣分）
+- `getColor()` - 获取颜色的函数（支持超出预设数量时生成新颜色）
+
 ### 类型定义
 
 所有类型集中在 [src/types/index.ts](src/types/index.ts)：
@@ -177,7 +249,22 @@ pnpm lint         # 运行 ESLint
 - `formatDateTime()` - 使用 Intl API 的中文日期格式化
 - `getOperationTypeText()` - 将操作类型映射为中文文本
 - `getOperationTypeColor()` - 返回操作类型的 Tailwind 颜色类
+- `getCurrentWeekRange()` - 获取当前自然周的时间范围（周一 00:00:00 到周日 23:59:59）
+- `getDayOfWeek()` - 获取星期几的中文显示文本
+- `getDateKey()` - 获取日期键值（YYYY-MM-DD 格式，用于数据分组）
 - `cn()` - 合并 Tailwind 类的工具函数
+
+[lib/statistics.ts](lib/statistics.ts) 包含统计相关函数：
+- `filterCurrentWeekLogs()` - 过滤当前周的日志（排除已撤销和撤销操作）
+- `transformToPieChartData()` - 转换为饼图数据（按项目名称聚合）
+- `transformToAddPieChartData()` - 转换为加分项饼图数据
+- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（使用绝对值）
+- `transformToBarChartData()` - 转换为柱状图数据（按日期和操作类型聚合）
+
+[lib/chartColors.ts](lib/chartColors.ts) 包含图表颜色配置：
+- `PRESET_COLORS` - 20 个预设颜色数组
+- `BAR_CHART_COLORS` - 柱状图专用颜色常量
+- `getColor()` - 获取颜色的函数（支持超出预设数量时生成新颜色）
 
 [lib/backup.ts](lib/backup.ts) 包含数据备份相关函数：
 - `getAppData()` - 从 localStorage 获取应用数据
@@ -211,6 +298,10 @@ pnpm dlx shadcn@latest add <组件名称>
 ```
 
 已有组件：button、dialog、input、card、alert-dialog、scroll-area、checkbox、tabs、textarea、label、alert
+
+**第三方库：**
+- `recharts` - 图表库，用于统计可视化
+- `jszip` - ZIP 文件处理，用于数据备份导入/导出
 
 ## 样式
 

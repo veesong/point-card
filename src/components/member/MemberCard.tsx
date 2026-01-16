@@ -19,7 +19,8 @@ import { EditMemberDialog } from './EditMemberDialog';
 import { QuickItemsManager } from './QuickItemsManager';
 import { ManualPointsDialog } from '@/components/points/ManualPointsDialog';
 import { MemberLogDialog } from '@/components/log/MemberLogDialog';
-import { Plus, Minus, Settings, Trash2, Edit2, History } from 'lucide-react';
+import { StatisticsDialog } from '@/components/statistics';
+import { Plus, Minus, Settings, Trash2, Edit2, History, BarChart3 } from 'lucide-react';
 import type { Member } from '@/types';
 
 interface MemberCardProps {
@@ -32,6 +33,7 @@ export function MemberCard({ member }: MemberCardProps) {
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [operationType, setOperationType] = useState<'add' | 'deduct'>('add');
   const [logDialogOpen, setLogDialogOpen] = useState(false);
+  const [statisticsDialogOpen, setStatisticsDialogOpen] = useState(false);
 
   const deleteMember = useAppStore((state) => state.deleteMember);
 
@@ -61,6 +63,14 @@ export function MemberCard({ member }: MemberCardProps) {
               title="查看操作日志"
             >
               <History className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setStatisticsDialogOpen(true)}
+              title="查看统计"
+            >
+              <BarChart3 className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
@@ -128,6 +138,7 @@ export function MemberCard({ member }: MemberCardProps) {
         operationType={operationType}
       />
       <MemberLogDialog member={member} open={logDialogOpen} onOpenChange={setLogDialogOpen} />
+      <StatisticsDialog member={member} open={statisticsDialogOpen} onOpenChange={setStatisticsDialogOpen} />
     </>
   );
 }

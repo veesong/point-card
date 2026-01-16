@@ -37,3 +37,37 @@ export function getOperationTypeColor(type: string): string {
   };
   return map[type] || 'text-foreground';
 }
+
+// 获取当前自然周的时间范围（周一 00:00:00 到周日 23:59:59）
+export function getCurrentWeekRange(): { start: number; end: number } {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+
+  // 计算本周一
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+
+  // 计算本周日
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
+
+  return {
+    start: monday.getTime(),
+    end: sunday.getTime(),
+  };
+}
+
+// 获取星期几显示文本
+export function getDayOfWeek(timestamp: number): string {
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  return days[new Date(timestamp).getDay()];
+}
+
+// 获取日期键值（用于分组）
+export function getDateKey(timestamp: number): string {
+  const date = new Date(timestamp);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
