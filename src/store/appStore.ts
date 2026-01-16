@@ -120,7 +120,7 @@ const defaultCategories = [
 ];
 
 const defaultBulletin = {
-  content: '欢迎使用家庭积分管理系统！\n在这里可以记录家庭成员的积分变化。',
+  content: '👏欢迎使用家庭积分管理系统！\n📊在这里可以记录家庭成员的积分变化。\n💪积分卡是为了改善生活习惯、突破薄弱的地方，提升生活质量，大人小孩都用起来。\n❌不要为了加分而加分，本末倒置哦！',
   lastUpdated: Date.now()
 };
 
