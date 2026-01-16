@@ -67,6 +67,30 @@ export function transformToDeductPieChartData(logs: PointLog[]): ItemStatistics[
     .sort((a, b) => b.totalPoints - a.totalPoints);
 }
 
+// 转换为加分项饼图数据（按次数排序）
+export function transformToAddPieChartDataByCount(logs: PointLog[]): ItemStatistics[] {
+  const addLogs = logs.filter((log) => log.operationType === 'add');
+  return transformToPieChartData(addLogs).sort((a, b) => b.count - a.count);
+}
+
+// 转换为扣分项饼图数据（按次数排序，使用绝对值）
+export function transformToDeductPieChartDataByCount(logs: PointLog[]): ItemStatistics[] {
+  const deductLogs = logs.filter((log) => log.operationType === 'deduct');
+  const itemMap = new Map<string, { count: number; totalPoints: number }>();
+
+  deductLogs.forEach((log) => {
+    const existing = itemMap.get(log.itemName) || { count: 0, totalPoints: 0 };
+    itemMap.set(log.itemName, {
+      count: existing.count + 1,
+      totalPoints: existing.totalPoints + Math.abs(log.points),
+    });
+  });
+
+  return Array.from(itemMap.entries())
+    .map(([itemName, data]) => ({ itemName, ...data }))
+    .sort((a, b) => b.count - a.count);
+}
+
 // 转换为柱状图数据
 export function transformToBarChartData(logs: PointLog[]): DailyStatistics[] {
   const { start, end } = getCurrentWeekRange();

@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PieChart } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
-import { filterCurrentWeekLogs, transformToAddPieChartData, transformToDeductPieChartData, transformToBarChartData } from '@/lib/statistics';
+import { filterCurrentWeekLogs, transformToAddPieChartData, transformToDeductPieChartData, transformToAddPieChartDataByCount, transformToDeductPieChartDataByCount, transformToBarChartData } from '@/lib/statistics';
 import { PieChartSection } from './PieChartSection';
 import { BarChartSection } from './BarChartSection';
 import type { Member } from '@/types';
@@ -41,6 +41,16 @@ export function StatisticsDialog({ member, open, onOpenChange }: StatisticsDialo
 
   const deductPieChartData = useMemo(
     () => transformToDeductPieChartData(filteredLogs),
+    [filteredLogs]
+  );
+
+  const addPieChartByCountData = useMemo(
+    () => transformToAddPieChartDataByCount(filteredLogs),
+    [filteredLogs]
+  );
+
+  const deductPieChartByCountData = useMemo(
+    () => transformToDeductPieChartDataByCount(filteredLogs),
     [filteredLogs]
   );
 
@@ -84,7 +94,12 @@ export function StatisticsDialog({ member, open, onOpenChange }: StatisticsDialo
           </TabsList>
 
           <TabsContent value="pie" className="mt-4">
-            <PieChartSection addData={addPieChartData} deductData={deductPieChartData} />
+            <PieChartSection
+              addScoreData={addPieChartData}
+              addCountData={addPieChartByCountData}
+              deductScoreData={deductPieChartData}
+              deductCountData={deductPieChartByCountData}
+            />
           </TabsContent>
 
           <TabsContent value="bar" className="mt-4">

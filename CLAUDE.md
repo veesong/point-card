@@ -169,10 +169,13 @@ pnpm lint         # 运行 ESLint
 - 响应式设计，支持移动端和桌面端
 
 **饼图统计（项目统计）：**
-- 分别显示加分项和扣分项的饼图
-- 每个饼图显示：项目名称、次数、总积分
-- 饼图下方附详细数据表格，表格中用彩色圆点标识对应项目
-- 两个饼图依次使用预设颜色，确保颜色不重复
+- 显示四个饼图：加分项（按分数）、加分项（按次数）、扣分项（按分数）、扣分项（按次数）
+- 采用 2x2 网格布局，移动端堆叠为单列
+- 按分数的饼图：使用 `totalPoints` 作为饼图大小，标签显示"X分"
+- 按次数的饼图：使用 `count` 作为饼图大小，标签显示"X次"
+- 四个饼图下方附一个汇总数据表格，包含所有项目的次数和总积分
+- 表格中用彩色圆点标识对应项目，加分项显示绿色，扣分项显示红色
+- 颜色依次使用预设颜色，确保不重复
 - 加分项和扣分项都使用正数显示
 
 **柱状图统计（每日统计）：**
@@ -207,9 +210,10 @@ pnpm lint         # 运行 ESLint
 - 管理数据过滤和转换逻辑
 
 **[src/components/statistics/PieChartSection.tsx](src/components/statistics/PieChartSection.tsx)**
-- 饼图组件，显示加分项和扣分项统计
-- 包含详细数据表格
-- 使用共享颜色配置
+- 饼图组件，显示四个饼图（加分/扣分 × 分数/次数）
+- `SinglePieChart` - 单个饼图组件，支持按分数或按次数显示
+- `SummaryTable` - 汇总数据表格，显示所有项目的次数和总积分
+- 使用共享颜色配置，确保四个饼图和表格的颜色一致
 
 **[src/components/statistics/BarChartSection.tsx](src/components/statistics/BarChartSection.tsx)**
 - 柱状图组件，显示每日加分和扣分统计
@@ -218,8 +222,10 @@ pnpm lint         # 运行 ESLint
 **[src/lib/statistics.ts](src/lib/statistics.ts)**
 - 数据转换工具函数
 - `filterCurrentWeekLogs()` - 过滤当前周日志
-- `transformToAddPieChartData()` - 转换为加分项饼图数据
-- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（使用绝对值）
+- `transformToAddPieChartData()` - 转换为加分项饼图数据（按分数排序）
+- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（按分数排序，使用绝对值）
+- `transformToAddPieChartDataByCount()` - 转换为加分项饼图数据（按次数排序）
+- `transformToDeductPieChartDataByCount()` - 转换为扣分项饼图数据（按次数排序，使用绝对值）
 - `transformToBarChartData()` - 转换为柱状图数据
 
 **[src/lib/chartColors.ts](src/lib/chartColors.ts)**
@@ -256,9 +262,11 @@ pnpm lint         # 运行 ESLint
 
 [lib/statistics.ts](lib/statistics.ts) 包含统计相关函数：
 - `filterCurrentWeekLogs()` - 过滤当前周的日志（排除已撤销和撤销操作）
-- `transformToPieChartData()` - 转换为饼图数据（按项目名称聚合）
-- `transformToAddPieChartData()` - 转换为加分项饼图数据
-- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（使用绝对值）
+- `transformToPieChartData()` - 转换为饼图数据（按项目名称聚合，按分数排序）
+- `transformToAddPieChartData()` - 转换为加分项饼图数据（按分数排序）
+- `transformToDeductPieChartData()` - 转换为扣分项饼图数据（按分数排序，使用绝对值）
+- `transformToAddPieChartDataByCount()` - 转换为加分项饼图数据（按次数排序）
+- `transformToDeductPieChartDataByCount()` - 转换为扣分项饼图数据（按次数排序，使用绝对值）
 - `transformToBarChartData()` - 转换为柱状图数据（按日期和操作类型聚合）
 
 [lib/chartColors.ts](lib/chartColors.ts) 包含图表颜色配置：
