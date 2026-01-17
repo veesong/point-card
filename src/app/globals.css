@@ -123,3 +123,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* 自定义断点：在 1000px 时显示三列 */
+@media (min-width: 1000px) {
+  .member-grid-3-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 自定义断点：在 1000px 时公告栏和模板显示为 1:2 */
+@media (min-width: 1000px) {
+  .bulletin-template-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .bulletin-col-span-1 {
+    grid-column: span 1 / span 1;
+  }
+  .template-col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+}

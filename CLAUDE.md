@@ -171,9 +171,10 @@ pnpm lint         # 运行 ESLint
 
 **布局位置：**
 - 位于成员卡片下方
-- 左侧 1/4 宽度：公告栏
-- 右侧 3/4 宽度：快捷操作模板
+- 左侧 1/3 宽度：公告栏
+- 右侧 2/3 宽度：快捷操作模板
 - 移动端自动堆叠为单列布局
+- 在 ≥ 1000px 宽度时显示为 1:2 比例的水平布局
 
 ### 操作日志系统
 
@@ -202,12 +203,13 @@ pnpm lint         # 运行 ESLint
 **饼图统计（项目统计）：**
 - 显示四个饼图：加分项（按分数）、加分项（按次数）、扣分项（按分数）、扣分项（按次数）
 - 采用 2x2 网格布局，移动端堆叠为单列
-- 按分数的饼图：使用 `totalPoints` 作为饼图大小，标签显示"X分"
-- 按次数的饼图：使用 `count` 作为饼图大小，标签显示"X次"
+- 按分数的饼图：使用 `totalPoints` 作为饼图大小
+- 按次数的饼图：使用 `count` 作为饼图大小
 - 四个饼图下方附一个汇总数据表格，包含所有项目的次数和总积分
 - 表格中用彩色圆点标识对应项目，加分项显示绿色，扣分项显示红色
 - 颜色依次使用预设颜色，确保不重复
 - 加分项和扣分项都使用正数显示
+- 饼图扇区边上不显示文字标签（更简洁），通过悬停查看 Tooltip 或参考下方表格
 
 **柱状图统计（每日统计）：**
 - 分组柱状图，显示周一到周日的每天数据
@@ -215,6 +217,7 @@ pnpm lint         # 运行 ESLint
 - X 轴：星期几（周一到周日）
 - Y 轴：积分
 - 鼠标悬停显示具体分数
+- 图例使用 Bar 组件的 `name` 属性（"加分"和"扣分"），确保正确显示
 
 **图表库：**
 - 使用 Recharts 图表库（React 友好、TypeScript 支持、Tailwind CSS 兼容）
@@ -354,6 +357,33 @@ pnpm dlx shadcn@latest add <组件名称>
 使用 Tailwind CSS v4 和 `@import "tailwindcss"` 语法。颜色方案使用 CSS 变量支持亮/暗模式，定义在 [app/globals.css](app/globals.css)。
 
 使用 [lib/utils.ts](lib/utils.ts) 中的 `cn()` 工具函数来合并 Tailwind 类。
+
+### 响应式布局和自定义断点
+
+项目使用自定义 CSS 媒体查询实现精确的响应式断点，定义在 [src/app/globals.css](src/app/globals.css)：
+
+**积分卡布局：**
+- **< 768px**（移动端）：1列
+- **768px - 999px**（平板）：2列
+- **≥ 1000px**（桌面）：3列
+- 使用 `.member-grid-3-cols` 自定义类
+
+**公告栏和模板布局：**
+- **< 1000px**：垂直堆叠
+- **≥ 1000px**：水平排列，比例 1:2（公告栏占 1/3，模板占 2/3）
+- 使用 `.bulletin-template-grid`、`.bulletin-col-span-1`、`.template-col-span-2` 自定义类
+
+**实现方式：**
+在 Tailwind CSS v4 中，通过在 `@layer base` 之后添加自定义媒体查询来实现断点：
+```css
+@media (min-width: 1000px) {
+  .member-grid-3-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+```
+
+这种方式比使用 Tailwind 的任意值语法（如 `min-[1000px]:grid-cols-3`）更可靠，避免了 CSS 加载顺序导致的问题。
 
 ## CI/CD
 

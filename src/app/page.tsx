@@ -25,11 +25,11 @@ export default function Home() {
           </section>
 
           <section>
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 bulletin-template-grid gap-6">
+              <div className="bulletin-col-span-1">
                 <BulletinSection />
               </div>
-              <div className="lg:col-span-3">
+              <div className="template-col-span-2">
                 <TemplateSection />
               </div>
             </div>
