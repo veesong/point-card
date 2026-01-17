@@ -10,8 +10,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { exportToZip, importFromZip } from '@/lib/backup';
+import { exportToZip, importFromZip, resetSystem } from '@/lib/backup';
 
 interface ExportImportDialogProps {
   open: boolean;
@@ -21,6 +31,8 @@ interface ExportImportDialogProps {
 export function ExportImportDialog({ open, onOpenChange }: ExportImportDialogProps) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
@@ -57,7 +69,22 @@ export function ExportImportDialog({ open, onOpenChange }: ExportImportDialogPro
     }
   };
 
+  const handleReset = async () => {
+    setIsResetting(true);
+    setMessage(null);
+
+    try {
+      await resetSystem();
+      // 注意：resetSystem 会触发页面刷新，所以下面的代码可能不会执行
+      setMessage({ type: 'success', text: '系统重置成功，页面即将刷新' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error instanceof Error ? error.message : '重置失败' });
+      setIsResetting(false);
+    }
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -99,6 +126,21 @@ export function ExportImportDialog({ open, onOpenChange }: ExportImportDialogPro
                   cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
+
+            <div className="border-t pt-4">
+              <Label className="text-destructive">重置系统</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                清除所有业务数据并恢复到初始状态（包括成员、日志、模板、分类和公告栏）
+              </p>
+              <Button
+                onClick={() => setResetConfirmOpen(true)}
+                disabled={isResetting}
+                variant="destructive"
+                className="w-full"
+              >
+                {isResetting ? '重置中...' : '重置系统'}
+              </Button>
+            </div>
           </div>
 
           {message && (
@@ -109,5 +151,33 @@ export function ExportImportDialog({ open, onOpenChange }: ExportImportDialogPro
         </div>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>确认重置系统？</AlertDialogTitle>
+          <AlertDialogDescription>
+            此操作将清除所有业务数据并恢复到初始状态。操作不可撤销。
+            <br /><br />
+            将被清除的数据包括：
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>所有成员及其积分</li>
+              <li>所有操作日志</li>
+              <li>所有自定义模板和分类</li>
+              <li>公告栏内容</li>
+            </ul>
+            <br />
+            保留的数据：备份配置（GitHub Token 和 Gist ID）
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isResetting}>取消</AlertDialogCancel>
+          <AlertDialogAction onClick={handleReset} disabled={isResetting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            确认重置
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

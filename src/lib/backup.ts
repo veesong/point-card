@@ -220,3 +220,19 @@ export async function importFromZip(file: File): Promise<void> {
   const appData = JSON.parse(content);
   saveAppData(appData);
 }
+
+/**
+ * 重置系统到初始状态
+ * 清除所有业务数据（成员、日志、模板、分类、公告）并恢复到初始状态
+ * 保留备份配置（GitHub Token 和 Gist ID）
+ */
+export async function resetSystem(): Promise<void> {
+  // 清除业务数据 localStorage
+  localStorage.removeItem('family-points-storage');
+
+  // 注意：不删除 'backup-config'，保留用户的备份配置
+  // localStorage.removeItem('backup-config');
+
+  // 刷新页面，Zustand 会自动使用默认值初始化
+  window.location.reload();
+}
