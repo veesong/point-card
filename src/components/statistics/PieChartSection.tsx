@@ -53,8 +53,6 @@ function SinglePieChart({ data, title, emptyMessage, startIndex, chartType }: Si
             cx="50%"
             cy="50%"
             outerRadius={60}
-            label={(entry) => `${entry.name}: ${entry.value}${chartType === 'score' ? '分' : '次'}`}
-            labelLine={false}
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getColor(startIndex + index)} />

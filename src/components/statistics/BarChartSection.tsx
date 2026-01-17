@@ -42,11 +42,7 @@ export function BarChartSection({ data }: BarChartSectionProps) {
             borderRadius: '0.5rem',
           }}
         />
-        <Legend
-          formatter={(value: string) =>
-            value === 'addPoints' ? '加分' : '扣分'
-          }
-        />
+        <Legend />
         <Bar
           dataKey="addPoints"
           fill={BAR_CHART_COLORS.add}
