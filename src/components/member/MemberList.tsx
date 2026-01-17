@@ -20,7 +20,7 @@ export function MemberList() {
           <p className="text-sm">点击右上角的&ldquo;添加成员&rdquo;按钮开始使用</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 member-grid-3-cols gap-4">
           {members.map((member) => (
             <MemberCard key={member.id} member={member} />
           ))}
