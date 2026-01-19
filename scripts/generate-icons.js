@@ -5,6 +5,7 @@
  * Run with: node scripts/generate-icons.js
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
 const fs = require('fs');
 const path = require('path');
 

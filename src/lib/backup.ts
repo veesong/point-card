@@ -17,6 +17,7 @@ export function getAppData(): Record<string, unknown> {
   const parsed = JSON.parse(data);
 
   // 提取并移除内嵌的版本信息（不要上传到 Gist）
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { _syncVersion, ...appData } = parsed;
 
   return appData;

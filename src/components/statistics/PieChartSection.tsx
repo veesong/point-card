@@ -140,7 +140,6 @@ export function PieChartSection({ addScoreData, addCountData, deductScoreData, d
   // 计算颜色起始位置（使用按分数排序的数据来确定颜色）
   const addScoreLength = addScoreData.length;
   const addCountLength = addCountData.length;
-  const deductScoreLength = deductScoreData.length;
 
   const addStartIndex = 0;
   const deductStartIndex = Math.max(addScoreLength, addCountLength);

@@ -4,14 +4,6 @@ const PRECACHE_LIST = [
   '/point-card/manifest.json',
 ];
 
-// Cache strategies
-const RUNTIME_CACHE_STRATEGIES = {
-  images: 'CacheFirst',
-  api: 'NetworkFirst',
-  static: 'StaleWhileRevalidate',
-  fonts: 'CacheFirst',
-};
-
 // Install event - precache app shell
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Install event triggered');
