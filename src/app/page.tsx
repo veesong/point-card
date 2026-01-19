@@ -8,12 +8,15 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4 max-w-6xl">
         <header className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex justify-end sm:hidden">
+              <BackupButton />
+            </div>
             <div className="text-center flex-1">
               <h1 className="text-4xl font-bold mb-2">家庭积分管理系统</h1>
               <p className="text-muted-foreground">记录家庭成员的积分变化</p>
             </div>
-            <div className="flex gap-2">
+            <div className="hidden sm:flex gap-2">
               <BackupButton />
             </div>
           </div>

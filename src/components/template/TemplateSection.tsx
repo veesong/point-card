@@ -79,8 +79,8 @@ export function TemplateSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <h2 className="text-2xl font-bold">快捷操作模板</h2>
           <Tabs value={displayMode} onValueChange={(value) => setTemplateDisplayMode(value as TemplateDisplayMode)}>
             <TabsList>
@@ -89,7 +89,7 @@ export function TemplateSection() {
             </TabsList>
           </Tabs>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {members.length > 0 && (
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Download className="mr-2 h-4 w-4" />
