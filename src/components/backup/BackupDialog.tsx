@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +16,8 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { BackupConfig } from '@/types';
 import { uploadToGist, downloadFromGist, createGist, validateGistConfig } from '@/lib/backup';
+import { useSyncStore } from '@/store/syncStore';
+import { SyncStatusIndicator } from './SyncStatusIndicator';
 
 interface BackupDialogProps {
   open: boolean;
@@ -22,27 +25,32 @@ interface BackupDialogProps {
 }
 
 export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
-  const [config, setConfig] = useState<BackupConfig>({
-    gistId: '',
-    githubToken: '',
-  });
+  const syncStore = useSyncStore();
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // 本地临时配置（用于对话框编辑，未保存前不影响 store）
+  const [tempConfig, setTempConfig] = useState<BackupConfig>({
+    gistId: syncStore.gistId,
+    githubToken: syncStore.githubToken,
+    autoSyncEnabled: syncStore.autoSyncEnabled || false,
+  });
+
+  // 当对话框打开时，从 store 加载配置
   useEffect(() => {
-    const savedConfig = localStorage.getItem('backup-config');
-    if (savedConfig) {
-      try {
-        setConfig(JSON.parse(savedConfig));
-      } catch (error) {
-        console.error('Failed to parse backup config:', error);
-      }
+    if (open) {
+      setTempConfig({
+        gistId: syncStore.gistId,
+        githubToken: syncStore.githubToken,
+        autoSyncEnabled: syncStore.autoSyncEnabled || false,
+      });
+      setIsValid(syncStore.gistId && syncStore.githubToken ? true : null);
     }
-  }, []);
+  }, [open, syncStore.gistId, syncStore.githubToken, syncStore.autoSyncEnabled]);
 
   const validateConfig = async () => {
-    if (!config.gistId || !config.githubToken) {
+    if (!tempConfig.gistId || !tempConfig.githubToken) {
       setIsValid(null);
       return;
     }
@@ -51,7 +59,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
     setMessage(null);
 
     try {
-      const valid = await validateGistConfig(config);
+      const valid = await validateGistConfig(tempConfig);
       setIsValid(valid);
       setMessage(valid ? { type: 'success', text: '配置验证成功' } : { type: 'error', text: '配置验证失败，请检查 Gist ID 和 Token' });
     } catch (error) {
@@ -63,7 +71,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
   };
 
   const handleSave = async () => {
-    if (!config.gistId || !config.githubToken) {
+    if (!tempConfig.gistId || !tempConfig.githubToken) {
       setMessage({ type: 'error', text: '请填写完整的配置信息' });
       return;
     }
@@ -72,14 +80,19 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
     setMessage(null);
 
     try {
-      const valid = await validateGistConfig(config);
+      const valid = await validateGistConfig(tempConfig);
       if (!valid) {
         setMessage({ type: 'error', text: '配置验证失败，请检查 Gist ID 和 Token' });
         setIsValid(false);
         return;
       }
 
-      localStorage.setItem('backup-config', JSON.stringify(config));
+      // 保存到 syncStore
+      syncStore.setBackupConfig({
+        gistId: tempConfig.gistId,
+        githubToken: tempConfig.githubToken,
+        autoSyncEnabled: tempConfig.autoSyncEnabled || false,
+      });
       setIsValid(true);
       setMessage({ type: 'success', text: '配置保存成功' });
     } catch (error) {
@@ -90,7 +103,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
   };
 
   const handleCreateGist = async () => {
-    if (!config.githubToken) {
+    if (!tempConfig.githubToken) {
       setMessage({ type: 'error', text: '请先填写 GitHub Token' });
       return;
     }
@@ -99,8 +112,8 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
     setMessage(null);
 
     try {
-      const gistId = await createGist({ githubToken: config.githubToken });
-      setConfig({ ...config, gistId });
+      const gistId = await createGist({ githubToken: tempConfig.githubToken });
+      setTempConfig({ ...tempConfig, gistId });
       setIsValid(true);
       setMessage({ type: 'success', text: `Gist 创建成功！ID: ${gistId}` });
     } catch (error) {
@@ -111,7 +124,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
   };
 
   const handleUpload = async () => {
-    if (!config.gistId || !config.githubToken) {
+    if (!tempConfig.gistId || !tempConfig.githubToken) {
       setMessage({ type: 'error', text: '请先配置并保存 Gist 信息' });
       return;
     }
@@ -120,7 +133,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
     setMessage(null);
 
     try {
-      await uploadToGist(config);
+      await uploadToGist(tempConfig);
       setMessage({ type: 'success', text: '数据上传成功' });
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : '上传失败' });
@@ -130,7 +143,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
   };
 
   const handleDownload = async () => {
-    if (!config.gistId || !config.githubToken) {
+    if (!tempConfig.gistId || !tempConfig.githubToken) {
       setMessage({ type: 'error', text: '请先配置并保存 Gist 信息' });
       return;
     }
@@ -139,7 +152,7 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
     setMessage(null);
 
     try {
-      await downloadFromGist(config);
+      await downloadFromGist(tempConfig);
       setMessage({ type: 'success', text: '数据下载成功，页面即将刷新' });
     } catch (error) {
       setMessage({ type: 'error', text: error instanceof Error ? error.message : '下载失败' });
@@ -177,8 +190,8 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
               <Input
                 id="githubToken"
                 type="password"
-                value={config.githubToken}
-                onChange={(e) => setConfig({ ...config, githubToken: e.target.value })}
+                value={tempConfig.githubToken}
+                onChange={(e) => setTempConfig({ ...tempConfig, githubToken: e.target.value })}
                 placeholder="ghp_xxxxxxxxxxxx"
               />
             </div>
@@ -188,15 +201,31 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
               <div className="flex gap-2">
                 <Input
                   id="gistId"
-                  value={config.gistId}
-                  onChange={(e) => setConfig({ ...config, gistId: e.target.value })}
+                  value={tempConfig.gistId}
+                  onChange={(e) => setTempConfig({ ...tempConfig, gistId: e.target.value })}
                   placeholder="输入已存在的 Gist ID，或点击创建新 Gist"
                 />
-                <Button onClick={handleCreateGist} disabled={isLoading || !config.githubToken} type="button">
+                <Button onClick={handleCreateGist} disabled={isLoading || !tempConfig.githubToken} type="button">
                   创建新 Gist
                 </Button>
               </div>
             </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="autoSync"
+                checked={tempConfig.autoSyncEnabled || false}
+                onCheckedChange={(checked) =>
+                  setTempConfig({ ...tempConfig, autoSyncEnabled: checked as boolean })
+                }
+              />
+              <Label htmlFor="autoSync" className="cursor-pointer">
+                启用自动同步
+              </Label>
+            </div>
+            <p className="text-sm text-muted-foreground pl-6">
+              数据变化时自动上传到 Gist，页面刷新时自动下载
+            </p>
 
             <div className="flex gap-2">
               <Button onClick={validateConfig} disabled={isLoading} variant="outline" type="button">
@@ -213,8 +242,32 @@ export function BackupDialog({ open, onOpenChange }: BackupDialogProps) {
             </div>
           </div>
 
+          {/* 自动同步已启用时显示同步状态 */}
+          {syncStore.autoSyncEnabled && (
+            <div className="border rounded-lg p-4 space-y-2">
+              <h3 className="font-semibold">同步状态</h3>
+              <SyncStatusIndicator
+                status={syncStore.syncStatus || 'idle'}
+                lastSyncTime={syncStore.lastSyncTime}
+                error={syncStore.lastSyncError}
+              />
+              {(syncStore.syncStatus === 'conflict' || syncStore.syncStatus === 'error') && (
+                <Button
+                  onClick={handleDownload}
+                  disabled={isLoading}
+                  variant="outline"
+                  size="sm"
+                  className="mt-2"
+                  type="button"
+                >
+                  从云端下载
+                </Button>
+              )}
+            </div>
+          )}
+
           <div className="border-t pt-4">
-            <h3 className="font-semibold mb-4">数据同步</h3>
+            <h3 className="font-semibold mb-4">手动同步</h3>
             <div className="flex gap-2">
               <Button onClick={handleUpload} disabled={isLoading || !isValid} type="button">
                 上传到 Gist

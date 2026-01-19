@@ -88,6 +88,7 @@ export interface TemplateState {
   bulletin: Bulletin;
   _hasHydrated?: boolean; // 数据水合完成标记
   templateDisplayMode: TemplateDisplayMode; // 模板展示模式
+  _syncVersion?: string; // 同步版本号（内嵌，不参与业务逻辑）
 
   // 分类操作
   addCategory: (name: string) => void;
@@ -117,6 +118,34 @@ export interface BackupConfig {
   gistId: string; // Gist ID
   githubToken: string; // GitHub Personal Access Token
   lastSyncTime?: number; // 最后同步时间戳
+  localVersion?: string; // 最后已知的本地版本
+  remoteVersion?: string; // 最后已知的远程版本
+  syncStatus?: SyncStatus; // 同步状态
+  lastSyncError?: string; // 最后同步错误信息
+  autoSyncEnabled?: boolean; // 自动同步开关（默认 false）
+  deviceId?: string; // 设备唯一标识符
+}
+
+// 同步状态
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'conflict';
+
+// Gist 数据包装结构
+export interface GistDataPackage {
+  version: string; // ISO 8601 时间戳
+  timestamp: number; // Unix 时间戳（毫秒）
+  deviceId: string; // 设备唯一标识符
+  checksum: string; // 数据的 SHA-256 校验和
+  data: {
+    state: {
+      version: number; // Zustand 版本（6）
+      members: Member[];
+      logs: PointLog[];
+      categories: TemplateCategory[];
+      templates: TemplateItem[];
+      bulletin: Bulletin;
+      templateDisplayMode: TemplateDisplayMode;
+    };
+  };
 }
 
 // Gist API 响应类型

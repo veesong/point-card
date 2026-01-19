@@ -502,36 +502,185 @@ useEffect(() => {
 }, [open, memberId]);
 ```
 
-## 数据备份系统
+## 数据备份与自动同步系统
 
 系统提供两种数据备份方式，确保数据安全和跨设备同步。
 
-### 1. GitHub Gist 同步（推荐）
+### 1. GitHub Gist 自动同步（推荐）
 
-通过 GitHub Gist API 实现云端备份和多设备同步。
+通过 GitHub Gist API 实现云端备份和多设备自动同步。
+
+**核心功能：**
+- **自动下载**：页面刷新时，如果远程版本更新，自动下载并刷新
+- **自动上传**：数据变化时，自动上传到 Gist（2.5 秒防抖）
+- **版本冲突检测**：上传前检查远程版本，冲突时提示用户
+- **冲突解决**：以 Gist 为准，仅提示用户不自动覆盖
 
 **配置要求：**
 - GitHub Personal Access Token（需要 `gist` 权限）
 - Gist ID（可自动创建新 Gist 或手动输入已存在的 Gist ID）
+- 自动同步开关（默认禁用，需手动启用）
 
 **使用流程：**
 1. 点击页面右上角的 "Gist 同步" 按钮
 2. 填写 GitHub Token（在 GitHub Settings {'->'} Developer settings {'->'} Personal access tokens {'->'} Tokens (classic) 创建）
 3. 点击"创建新 Gist"自动生成 Gist ID，或手动输入已存在的 Gist ID
 4. 点击"验证配置"确认配置正确
-5. 点击"保存配置"保存到 localStorage
-6. 使用"上传到 Gist"备份数据
-7. 使用"从 Gist 下载"恢复数据（会自动刷新页面）
+5. **勾选"启用自动同步"复选框**（默认不勾选，保护隐私）
+6. 点击"保存配置"保存到 localStorage
+7. 自动同步开始工作：
+   - 数据变化后 2.5 秒自动上传
+   - 页面刷新时自动下载远程更新
+8. 手动同步：使用"上传到 Gist"和"从 Gist 下载"按钮
+
+**同步状态指示器：**
+- 显示在右上角按钮区域（仅启用自动同步时）
+- 状态类型：
+  - `idle`（空闲）：灰色云图标
+  - `syncing`（同步中）：蓝色旋转图标
+  - `success`（成功）：绿色勾图标 + "已同步于 X分钟前"
+  - `error`（错误）：红色叉图标 + 错误信息
+  - `conflict`（冲突）：橙色警告图标 + "远程版本较新，无法上传"
 
 **技术实现：**
-- 使用 GitHub Gist REST API（`https://api.github.com/gists`）
-- 数据文件名：`family-points-data.json`
-- 支持创建和更新 Gist
-- 自动更新 Gist 描述为备份时间
+
+**版本控制机制：**
+- 使用 ISO 8601 时间戳作为版本号（例如：`2026-01-19T10:30:45.123Z`）
+- 字符串比较即可判断版本新旧
+- 版本号内嵌到应用数据中（`_syncVersion` 字段）
+- 页面刷新后版本信息保留，避免误报冲突
+
+**数据包装结构：**
+```typescript
+interface GistDataPackage {
+  version: string;           // ISO 8601 时间戳
+  timestamp: number;         // Unix 时间戳（毫秒）
+  deviceId: string;          // 设备唯一标识符
+  checksum: string;          // SHA-256 校验和
+  data: {
+    state: {
+      // 应用数据（members、logs、templates 等）
+      _syncVersion: string;  // 内嵌版本号（刷新后保留）
+    };
+  };
+}
+```
+
+**工作流程：**
+
+**自动上传（数据变化时）：**
+1. 监听 Zustand store 所有状态变化
+2. 防抖 2.5 秒后触发上传
+3. 轻量级获取远程 Gist 元数据（不下载完整内容）
+4. 比较版本：
+   - 如果远程版本 > 本地版本 → 冲突，取消上传，提示用户
+   - 否则 → 继续上传
+5. 创建新的 `GistDataPackage`（新版本号）
+6. 上传到 Gist
+7. 更新本地版本号
+8. 更新同步状态为 'success'
+
+**自动下载（页面刷新时）：**
+1. 等待 Zustand store 水合完成
+2. 检查是否启用自动同步
+3. 轻量级获取远程 Gist 元数据
+4. 比较版本：
+   - 如果没有本地版本 → 下载
+   - 如果远程版本 > 本地版本 → 下载
+   - 否则 → 不操作
+5. 如果需要下载：
+   - 下载完整数据
+   - 解析 `GistDataPackage`
+   - 保存到 localStorage（包含 `_syncVersion`）
+   - 刷新页面
+
+**性能优化：**
+- **防抖机制**：2.5 秒延迟，避免频繁 API 请求
+- **轻量级版本检查**：`fetchGistInfo()` 只获取元数据（~1KB），不下载完整内容（~100KB）
+- **冲突检测优化**：上传前只检查版本号，不下载完整数据
 
 **配置存储：**
-- 配置信息存储在 localStorage 的 `backup-config` 键中
-- 包含：`gistId`、`githubToken`、`lastSyncTime`
+- 同步配置存储在 `syncStore`（Zustand + persist）
+- localStorage 键名：`sync-config-storage`
+- 包含：`gistId`、`githubToken`、`autoSyncEnabled`、`localVersion`、`remoteVersion`、`syncStatus`、`lastSyncError`、`deviceId`
+
+**向后兼容性：**
+- 自动检测旧格式 Gist 数据，自动包装为新格式
+- 新旧格式数据都可以正常读取
+- 第一次上传时自动迁移到新格式
+
+**文件结构：**
+
+**核心库文件：**
+- [src/lib/backup.ts](src/lib/backup.ts) - 备份和同步基础功能
+  - `getAppData()` - 获取应用数据（移除 `_syncVersion`）
+  - `getLocalVersion()` - 获取本地版本号
+  - `saveAppData()` - 保存数据并刷新页面
+  - `downloadFromGist()` - 下载数据（返回版本号）
+  - `uploadToGist()` - 上传数据
+  - `createGistDataPackage()` - 创建版本化数据包
+  - `parseGistDataFile()` - 解析数据（支持新旧格式）
+  - `fetchGistInfo()` - 轻量级获取元数据
+
+- [src/lib/version.ts](src/lib/version.ts) - 版本工具
+  - `generateVersion()` - 生成 ISO 8601 时间戳
+  - `compareVersions()` - 比较两个版本号
+  - `getChecksum()` - 计算 SHA-256 校验和
+
+- [src/lib/sync.ts](src/lib/sync.ts) - 同步核心逻辑
+  - `shouldDownloadRemote()` - 判断是否应该下载
+  - `autoDownloadFromGist()` - 自动下载逻辑
+  - `autoUploadWithConflictCheck()` - 自动上传逻辑（带冲突检测）
+  - `debounce()` - 防抖函数
+
+**状态管理：**
+- [src/store/syncStore.ts](src/store/syncStore.ts) - 同步配置 Store
+  - 存储 gistId、githubToken、autoSyncEnabled 等
+  - 提供 setBackupConfig、updateSyncStatus 等 actions
+
+**React Hooks：**
+- [src/hooks/useAutoSync.ts](src/hooks/useAutoSync.ts) - 自动同步 Hook
+  - 监听 appStore 变化
+  - 防抖后触发自动上传
+
+**组件：**
+- [src/components/SyncProvider.tsx](src/components/SyncProvider.tsx) - 同步提供者
+  - 在应用启动时初始化自动下载
+  - 初始化 useAutoSync hook
+
+- [src/components/backup/SyncStatusIndicator.tsx](src/components/backup/SyncStatusIndicator.tsx) - 同步状态指示器
+  - 显示同步状态图标和文本
+  - 格式化时间显示（"刚刚"、"5分钟前"等）
+
+- [src/components/backup/BackupButton.tsx](src/components/backup/BackupButton.tsx) - 备份按钮
+  - 显示同步状态指示器（启用自动同步时）
+  - 打开 Gist 同步对话框
+
+- [src/components/backup/BackupDialog.tsx](src/components/backup/BackupDialog.tsx) - Gist 同步对话框
+  - 配置 GitHub Token 和 Gist ID
+  - 自动同步开关（复选框）
+  - 显示同步状态
+  - 手动上传/下载按钮
+
+**重要注意事项：**
+
+**避免无限循环：**
+- `SyncProvider` 的 `useEffect` 依赖数组**不能包含 `syncStore`**
+- 使用 `eslint-disable-next-line react-hooks/exhaustive-deps` 注释
+- 原因：`updateSyncStatus` 会更新 `syncStore`，导致无限循环
+
+**版本号持久化：**
+- 版本号必须内嵌到应用数据中（`_syncVersion` 字段）
+- 不能只存储在 `syncStore` 中（刷新后会丢失）
+- `getAppData()` 提取并移除 `_syncVersion`（不上传到 Gist）
+- `downloadFromGist()` 下载时写入 `_syncVersion`
+- `getLocalVersion()` 读取 `_syncVersion` 用于版本比较
+
+**类型定义：**
+- `SyncStatus` - 同步状态类型：'idle' | 'syncing' | 'success' | 'error' | 'conflict'
+- `GistDataPackage` - Gist 数据包装结构
+- `BackupConfig` - 扩展，新增 `autoSyncEnabled`、`deviceId`、`localVersion`、`remoteVersion`、`syncStatus`、`lastSyncError`
+- `TemplateState` - 扩展，新增 `_syncVersion` 字段（不参与业务逻辑）
 
 ### 2. ZIP 文件导出/导入（备用方案）
 
@@ -564,18 +713,20 @@ useEffect(() => {
 - 使用 `jszip` 库处理 ZIP 文件
 - 导出：JSON {'->'} ZIP Blob {'->} 下载
 - 导入：File {'->'} JSZip {'->'} JSON {'->'} localStorage
-- 重置：移除 `family-points-storage` 键，保留 `backup-config` 键，刷新页面
+- 重置：移除 `family-points-storage` 键，保留 `sync-config-storage` 键，刷新页面
 
 ### 组件结构
 
 **[src/components/backup/BackupButton.tsx](src/components/backup/BackupButton.tsx)**
 - 主入口组件，显示两个按钮
+- 显示同步状态指示器（启用自动同步时）
 - 管理 Gist 同步对话框和导出/导入对话框的开关状态
 
 **[src/components/backup/BackupDialog.tsx](src/components/backup/BackupDialog.tsx)**
 - Gist 同步配置对话框
 - 包含配置表单、验证逻辑、上传/下载功能
-- 显示操作成功/失败消息
+- 自动同步开关（复选框）
+- 显示同步状态和操作消息
 
 **[src/components/backup/ExportImportDialog.tsx](src/components/backup/ExportImportDialog.tsx)**
 - 导出/导入对话框
@@ -585,9 +736,18 @@ useEffect(() => {
 
 ### 使用建议
 
-1. **首次使用**：配置 GitHub Token 并创建新 Gist
+**自动同步用户：**
+1. **首次配置**：配置 GitHub Token 并创建新 Gist，勾选"启用自动同步"
+2. **正常使用**：数据变化后自动上传，页面刷新时自动下载
+3. **多设备同步**：在多设备上使用相同的 Gist ID 和 Token
+4. **冲突处理**：如遇冲突提示，点击"从云端下载"同步最新数据
+
+**手动同步用户：**
+1. **首次使用**：配置 GitHub Token 并创建新 Gist（不勾选自动同步）
 2. **定期备份**：每次重要操作后点击"上传到 Gist"
-3. **跨设备同步**：在多设备上使用相同的 Gist ID 和 Token
+3. **跨设备同步**：在多设备上使用相同的 Gist ID 和 Token，手动上传/下载
+
+**备用方案：**
 4. **网络问题**：使用"导出 ZIP"作为备用方案
 5. **数据迁移**：导出 ZIP 文件可长期保存，用于数据恢复
 6. **重置系统**：当需要清除所有数据并重新开始时使用，重置前建议先导出备份
