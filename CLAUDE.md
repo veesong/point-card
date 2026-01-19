@@ -6,6 +6,8 @@
 
 这是一个使用 Next.js 16、React 19、TypeScript 和 Tailwind CSS 构建的家庭积分管理系统。它支持家庭成员的积分追踪，包括积分操作（加分/扣分）、快捷积分、操作日志、撤销功能和统计图表。
 
+**应用已支持 PWA（渐进式 Web 应用）模式**，可安装到设备主屏幕，支持离线使用和自动更新。
+
 ## 开发命令
 
 ```bash
@@ -55,6 +57,7 @@ pnpm lint         # 运行 ESLint
 - `template/` - 快捷操作模板（TemplateSection、TemplateCategory、TemplateItem、TemplateCardItem、TemplateManagerDialog、TemplateImportDialog）
 - `bulletin/` - 公告栏（BulletinSection）
 - `backup/` - 数据备份（BackupButton、BackupDialog、ExportImportDialog）
+- `ServiceWorkerProvider.tsx` - PWA Service Worker 提供者
 - `ui/` - shadcn/ui 基础组件
 
 **对话框模式：**
@@ -351,6 +354,8 @@ pnpm dlx shadcn@latest add <组件名称>
 **第三方库：**
 - `recharts` - 图表库，用于统计可视化
 - `jszip` - ZIP 文件处理，用于数据备份导入/导出
+- `workbox-window`、`workbox-build` - PWA Service Worker 支持
+- `sharp` - 图像处理，用于生成 PWA 图标
 
 ## 样式
 
@@ -759,3 +764,221 @@ interface GistDataPackage {
 - 建议创建专用的 Fine-grained token 或 classic token
 - Gist 默认为私有（public: false）
 - 定期更新 Token 以提高安全性
+
+## PWA（渐进式 Web 应用）
+
+应用已完全支持 PWA 模式，提供原生应用般的体验。
+
+### 核心功能
+
+**1. 离线支持**
+- Service Worker 缓存静态资源（HTML、CSS、JS、图片、字体）
+- 离线状态下可正常浏览已缓存内容
+- 网络恢复后自动同步更新
+
+**2. 应用安装**
+- **桌面端**：浏览器地址栏显示安装按钮，点击后添加到桌面/应用列表
+- **移动端**：通过浏览器菜单"添加到主屏幕"
+- 安装后以独立窗口运行，类似原生应用
+
+**3. 自动更新**
+- 检测到新版本时弹出提示
+- 用户确认后立即更新并刷新
+- 支持跳过等待，强制激活新版本
+
+**4. 在线/离线检测**
+- 实时监测网络连接状态
+- 控制台输出在线/离线日志
+- 为离线提示 UI 提供状态支持
+
+### 文件结构
+
+**核心文件：**
+- **[public/manifest.json](public/manifest.json)** - Web App 清单文件
+  - 应用名称、描述、图标
+  - 主题色、背景色
+  - 显示模式（standalone）
+  - 快捷方式配置
+
+- **[public/sw.js](public/sw.js)** - Service Worker 脚本
+  - 预缓存关键资源
+  - 运行时缓存策略
+  - 更新管理和清理旧缓存
+  - 消息通信处理
+
+- **[src/hooks/useRegisterServiceWorker.ts](src/hooks/useRegisterServiceWorker.ts)** - Service Worker 注册 Hook
+  - 自动注册（仅生产环境）
+  - 更新检测
+  - 在线/离线状态追踪
+  - 跳过等待功能
+
+- **[src/components/ServiceWorkerProvider.tsx](src/components/ServiceWorkerProvider.tsx)** - PWA 提供者组件
+  - 包装整个应用
+  - 管理更新提示
+  - 监听网络状态变化
+
+- **[src/app/layout.tsx](src/app/layout.tsx)** - 根布局
+  - 导入 ServiceWorkerProvider
+  - 配置 PWA 元数据
+  - 添加 manifest 链接和 meta 标签
+
+**资源文件：**
+- **[public/icons/](public/icons/)** - PWA 图标目录
+  - icon-72x72.png 到 icon-512x512.png（8 个尺寸）
+  - favicon.png 和 favicon.ico
+  - 所有图标使用蓝色主题（#3b82f6），显示"积分"文字
+
+### 缓存策略
+
+Service Worker 使用三种缓存策略：
+
+1. **StaleWhileRevalidate**（同源资源）
+   - 优先返回缓存（快速）
+   - 后台更新缓存（新鲜）
+   - 适用于：HTML、CSS、JS 文件
+
+2. **CacheFirst**（静态资源）
+   - 优先返回缓存
+   - 缓存不存在才请求网络
+   - 适用于：图片、字体
+
+3. **NetworkFirst**（API 请求）
+   - 优先请求网络
+   - 网络失败时返回缓存
+   - 适用于：API 调用（未来扩展）
+
+### 开发与测试
+
+**开发模式：**
+- Service Worker 在开发模式下**不注册**（避免缓存干扰）
+- 正常开发流程不受影响
+
+**生产模式：**
+```bash
+# 构建生产版本
+pnpm build
+
+# 本地测试生产构建
+npx serve out
+# 或
+pnpm start
+```
+
+**验证 PWA：**
+1. 打开 Chrome DevTools → Application 标签页
+2. 检查以下部分：
+   - **Manifest**：验证清单文件加载正确
+   - **Service Workers**：确认 SW 已注册并激活
+   - **Cache Storage**：查看缓存内容
+3. 运行 Lighthouse 审计（Progressive Web App 类别）
+
+### 图标生成
+
+使用脚本生成 PWA 图标：
+```bash
+node scripts/generate-png-icons.js
+```
+
+**自定义图标：**
+1. 编辑 `scripts/generate-png-icons.js` 中的 SVG 模板
+2. 修改颜色、文字或图形
+3. 重新运行脚本
+4. 重新构建项目
+
+### 浏览器兼容性
+
+**完整支持：**
+- Chrome/Edge 90+（桌面和移动）
+- Firefox 90+（桌面和移动）
+
+**部分支持：**
+- Safari 15+（iOS 支持有限，不支持安装提示）
+
+**最低要求：**
+- HTTPS（或 localhost）
+- 现代 Service Worker API
+- Web App Manifest 支持
+
+### 配置说明
+
+**应用元数据（layout.tsx）：**
+```typescript
+export const metadata: Metadata = {
+  manifest: "/point-card/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "积分卡",
+  },
+  icons: { /* 图标配置 */ },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3b82f6",
+  // ... 其他视口配置
+};
+```
+
+**Manifest 配置（manifest.json）：**
+- `display: "standalone"` - 独立窗口模式
+- `orientation: "any"` - 支持任意方向
+- `start_url: "/point-card/"` - 启动 URL
+- `shortcuts` - 应用快捷方式（添加成员、查看统计）
+
+### 更新流程
+
+1. 新版本部署
+2. 用户访问应用
+3. Service Worker 检测到更新
+4. 弹出提示："新版本可用！点击'确定'立即更新，或点击'取消'下次更新。"
+5. 用户确认
+6. Service Worker 跳过等待并激活
+7. 页面自动刷新，加载新版本
+
+### 技术特点
+
+**无需大改架构：**
+- Zustand + localStorage 完美兼容 PWA
+- 现有状态管理无需修改
+- 所有功能正常工作
+
+**性能优化：**
+- 预缓存关键资源，提升加载速度
+- 智能缓存策略，平衡速度和新鲜度
+- 离线优先，渐进增强
+
+**用户体验：**
+- 一键安装，无需应用商店
+- 原生应用般的界面和交互
+- 自动更新，无需手动刷新
+
+### 故障排查
+
+**Service Worker 未注册：**
+- 确认使用 HTTPS 或 localhost
+- 检查浏览器控制台错误
+- 验证 `/point-card/sw.js` 可访问
+
+**应用无法安装：**
+- 检查 manifest.json 语法
+- 确认图标文件存在且可访问
+- 运行 Lighthouse PWA 审计
+
+**缓存问题：**
+- DevTools → Application → Clear storage → Clear site data
+- Service Workers → Unregister 注册的 SW
+- 刷新页面重新注册
+
+### 未来扩展
+
+可选的 PWA 增强功能：
+1. **后台同步**（Background Sync）- 离线操作队列，联网后自动同步
+2. **推送通知**（Push Notifications）- 重要事件提醒
+3. **定期同步**（Periodic Sync）- 定期刷新数据
+4. **分享目标**（Share Target）- 接受来自其他应用的分享
+5. **离线提示 UI** - 显示当前在线/离线状态
+
+### 文档
+
+详细实现指南请参考：[PWA_GUIDE.md](PWA_GUIDE.md)
+
