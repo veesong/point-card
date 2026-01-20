@@ -16,7 +16,7 @@ export function useRegisterServiceWorker() {
     error: null,
     updating: false,
     waiting: false,
-    offline: !navigator.onLine,
+    offline: false, // Initialize as false, will be updated in useEffect
   });
 
   useEffect(() => {
@@ -28,6 +28,9 @@ export function useRegisterServiceWorker() {
     ) {
       return;
     }
+
+    // Initialize offline status on client side
+    setSwState((prev) => ({ ...prev, offline: !navigator.onLine }));
 
     const registerSW = async () => {
       try {
