@@ -151,7 +151,6 @@ export function ManualPointsDialog({
                   placeholder="如：完成作业、做家务"
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)}
-                  autoFocus
                 />
               </div>
               <div>
